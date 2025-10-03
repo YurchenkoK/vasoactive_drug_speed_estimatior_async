@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Расчёт инфузии - Pfizer</title>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+    <div class="header">
+        <h1 class="logo">Pfizer</h1>
+    </div>
+    <div class="cart-container">
+        <h2 class="cart-title">Расчет скорости инфузии</h2>
+        
+        <div class="infusion-calculator">
+            <div class="calculator-form">
+                <div class="form-row">
+                    <label>Количество ампул:</label>
+                    <input type="text" placeholder="Введите кол-во" class="calc-input" value="{{ data.estimation_params.ampoules }}">
+                </div>
+                <div class="form-row">
+                    <label>Объём растворителя:</label>
+                    <input type="text" placeholder="Введите объём" class="calc-input" value="{{ data.estimation_params.solvent_volume }}">
+                </div>
+                <div class="form-row">
+                    <label>Масса пациента:</label>
+                    <input type="text" placeholder="Введите массу" class="calc-input" value="{{ data.estimation_params.patient_weight }}">
+                </div>
+            </div>
+        </div>
+        
+        <div class="results-section">
+            {% for item in data.estimation_items %}
+                <div class="result-card">
+                    <div class="drug-info">
+                        {% if item.image|slice:":4" == "http" %}
+                            <img src="{{ item.image }}" alt="{{ item.name }}" class="drug-image-result">
+                        {% else %}
+                            <img src="{% static item.image %}" alt="{{ item.name }}" class="drug-image-result">
+                        {% endif %}
+                        <h4 class="drug-name-result">{{ item.name }}</h4>
+                    </div>
+                    <div class="drug-specs">
+                        <div class="spec-item">
+                            <span class="spec-label">Концентрация в амп.:</span>
+                            <span class="spec-value">{{ item.concentration }}</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Объём амп.:</span>
+                            <span class="spec-value">{{ item.volume }}</span>
+                        </div>
+                        <div class="spec-item infusion-speed">
+                            <span class="spec-label">Скорость инфузии:</span>
+                            <span class="spec-value-result">{{ item.infusion_speed }} мл/кг/ч</span>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Главная - Pfizer</title>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+    <div class="header">
+        <h1 class="logo">Pfizer</h1>
+    </div>
+    <div class="search-section">
+        <form method="GET" action="{% url 'index' %}" class="search-form">
+            <input type="text" name="search" placeholder="Поиск по названию" class="search-input" value="{{ search_query|default:'' }}">
+            <button type="submit" class="search-button">Найти</button>
+        </form>
+    </div>
+    <div class="container">
+        <div class="drugs-grid">
+            {% for drug in data.drugs %}
+                <div class="drug-card">
+                    {% if drug.image|slice:":4" == "http" %}
+                        <img src="{{ drug.image }}" alt="{{ drug.name }}" class="drug-image">
+                    {% else %}
+                        <img src="{% static drug.image %}" alt="{{ drug.name }}" class="drug-image">
+                    {% endif %}
+                    <h3 class="drug-name">{{ drug.name }}</h3>
+                    <p class="drug-concentration">Концентрация в амп.: {{ drug.concentration }}</p>
+                    <a href="{% url 'vasoactive_drug_detail' drug.id %}" class="details-button">Подробнее</a>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="footer">
+        <a href="{% url 'estimation_infusion_speed' %}" class="cart-icon-link">
+            <div class="icon-circle">
+                <span class="microscope">🔬</span>
+                {% if data.estimation_count > 0 %}
+                    <span class="cart-badge">{{ data.estimation_count }}</span>
+                {% endif %}
+            </div>
+        </a>
+    </div>
+</body>
+</html>
