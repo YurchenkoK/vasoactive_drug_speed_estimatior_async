@@ -29,6 +29,7 @@ class Order(models.Model):
     
     status = models.CharField(max_length=10, choices=OrderStatus.choices, default=OrderStatus.DRAFT, verbose_name="Статус")
     creation_datetime = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
+    formation_datetime = models.DateTimeField(blank=True, null=True, verbose_name="Дата формирования")
     completion_datetime = models.DateTimeField(blank=True, null=True, verbose_name="Дата завершения")
     creator = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='created_orders', verbose_name="Создатель")
     moderator = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='moderated_orders', blank=True, null=True, verbose_name="Модератор")
@@ -48,8 +49,8 @@ class Order(models.Model):
 class DrugInOrder(models.Model):
     order = models.ForeignKey(Order, on_delete=models.DO_NOTHING, verbose_name="Заявка")
     drug = models.ForeignKey(Drug, on_delete=models.DO_NOTHING, verbose_name="Препарат")
-    dosage = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Дозировка (мкг/кг/мин)")
-    infusion_speed = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Скорость инфузии (мл/ч)")
+    infusion_speed = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Скорость инфузии (мл/мин)")
+    drug_rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Скорость введения (мг/кг/час)")
     
     class Meta:
         db_table = 'ssr_inDb_druginorder'
@@ -61,10 +62,14 @@ class DrugInOrder(models.Model):
         return f"{self.order.id}-{self.drug.name}"
     
     def calculate_infusion_speed(self):
-        if self.order and self.drug:
+        if self.order and self.order.solvent_volume and self.order.patient_weight:
             total_drug_mg = self.drug.concentration * self.order.ampoules_count * self.drug.volume
-            concentration_in_solution = total_drug_mg / self.order.solvent_volume
-            infusion_speed = (self.dosage * self.order.patient_weight * 60) / (concentration_in_solution * 1000)
-            self.infusion_speed = round(infusion_speed, 2)
-            return self.infusion_speed
-        return None
+            infusion_speed_ml_min = self.order.solvent_volume / 60
+            infusion_speed_ml_hour = infusion_speed_ml_min * 60
+            drug_mg_per_hour = (infusion_speed_ml_hour / self.order.solvent_volume) * total_drug_mg
+            drug_rate_mg_kg_hour = drug_mg_per_hour / self.order.patient_weight
+            
+            self.infusion_speed = round(infusion_speed_ml_min, 2)
+            self.drug_rate = round(drug_rate_mg_kg_hour, 2)
+            return self.infusion_speed, self.drug_rate
+        return None, None

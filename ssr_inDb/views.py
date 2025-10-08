@@ -1,10 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import Http404
 from django.db import connection
 from django.contrib.auth.models import User
 from .models import Drug, Order, DrugInOrder
 
 
-def index(request):
+def search(request):
     search_query = request.GET.get('search', '')
     drugs = Drug.objects.filter(is_active=True)
     if search_query:
@@ -66,18 +67,12 @@ def vasoactive_drug_detail(request, drug_id):
 
 def add_to_order(request, drug_id):
     if request.method != 'POST':
-        return redirect('index')
+        return redirect('search')
     
     drug = get_object_or_404(Drug, id=drug_id, is_active=True)
     user = User.objects.first()
     if not user:
         user = User.objects.create_user(username='testuser', password='testpass')
-    
-    dosage = request.POST.get('dosage', 5.0)
-    try:
-        dosage = float(dosage)
-    except:
-        dosage = 5.0
     
     draft_order, created = Order.objects.get_or_create(
         creator=user,
@@ -86,13 +81,8 @@ def add_to_order(request, drug_id):
     
     drug_in_order, created = DrugInOrder.objects.get_or_create(
         order=draft_order,
-        drug=drug,
-        defaults={'dosage': dosage}
+        drug=drug
     )
-    
-    if not created:
-        drug_in_order.dosage = dosage
-        drug_in_order.save()
     
     return redirect('vasoactive_drug_detail', drug_id=drug_id)
 
@@ -103,15 +93,12 @@ def estimation_infusion_speed(request, order_id=None):
         data = {'estimation_items': [], 'estimation_params': {'ampoules': 0, 'solvent_volume': 0, 'patient_weight': 0}}
         return render(request, 'estimation_infusion_speed.html', {'data': data})
     
-    # Если передан order_id, ищем конкретную заявку
     if order_id:
-        draft_order = Order.objects.filter(
-            id=order_id,
-            creator=user, 
-            status__in=[Order.OrderStatus.DRAFT, Order.OrderStatus.FORMED]
-        ).first()
+        order = get_object_or_404(Order, id=order_id, creator=user)
+        if order.status == Order.OrderStatus.DELETED:
+            raise Http404("Заявка удалена")
+        draft_order = order
     else:
-        # Ищем заявку в статусе DRAFT или FORMED
         draft_order = Order.objects.filter(
             creator=user, 
             status__in=[Order.OrderStatus.DRAFT, Order.OrderStatus.FORMED]
@@ -131,6 +118,7 @@ def estimation_infusion_speed(request, order_id=None):
             'volume': f'{drug_in_order.drug.volume} мл',
             'image': drug_in_order.drug.image_url or 'http://localhost:9000/images/default.png',
             'infusion_speed': f'{drug_in_order.infusion_speed}' if drug_in_order.infusion_speed else '',
+            'drug_rate': f'{drug_in_order.drug_rate}' if drug_in_order.drug_rate else '',
         })
     
     estimation_params = {
@@ -154,29 +142,22 @@ def update_order_params(request, order_id):
     
     order = get_object_or_404(Order, id=order_id, status=Order.OrderStatus.DRAFT)
     
-    # Получаем параметры заявки
     ampoules_count = request.POST.get('ampoules_count', '').strip()
     solvent_volume = request.POST.get('solvent_volume', '').strip()
     patient_weight = request.POST.get('patient_weight', '').strip()
     
-    # Проверяем, что все поля заполнены
     if not ampoules_count or not solvent_volume or not patient_weight:
-        # Если хотя бы одно поле пустое, перенаправляем обратно без изменений
         return redirect('estimation_infusion_speed_with_id', order_id=order_id)
     
-    # Обновляем параметры заявки
     try:
         order.ampoules_count = int(ampoules_count)
         order.solvent_volume = float(solvent_volume)
         order.patient_weight = float(patient_weight)
     except (ValueError, TypeError):
-        # Если произошла ошибка конвертации, перенаправляем обратно
         return redirect('estimation_infusion_speed_with_id', order_id=order_id)
     
-    # Сохраняем заявку (статус остается DRAFT)
     order.save()
     
-    # Пересчитываем скорость инфузии для всех препаратов в заявке
     drugs_in_order = DrugInOrder.objects.filter(order=order)
     for drug_in_order in drugs_in_order:
         drug_in_order.calculate_infusion_speed()
@@ -192,7 +173,7 @@ def delete_order(request, order_id):
     with connection.cursor() as cursor:
         cursor.execute('UPDATE "ssr_inDb_order" SET status = %s WHERE id = %s', [Order.OrderStatus.DELETED, order_id])
     
-    return redirect('index')
+    return redirect('search')
 
 
 def complete_order(request, order_id):
@@ -202,9 +183,8 @@ def complete_order(request, order_id):
     from django.utils import timezone
     order = get_object_or_404(Order, id=order_id, status__in=[Order.OrderStatus.DRAFT, Order.OrderStatus.FORMED])
     
-    # Завершаем заявку (сразу переводим в COMPLETED)
     order.status = Order.OrderStatus.COMPLETED
     order.completion_datetime = timezone.now()
     order.save()
     
-    return redirect('index')
+    return redirect('search')

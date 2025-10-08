@@ -14,7 +14,7 @@
         <h1 class="logo">Pfizer</h1>
     </div>
     <div class="search-section">
-        <form method="GET" action="{% url 'index' %}" class="search-form">
+        <form method="GET" action="{% url 'search' %}" class="search-form">
             <input type="text" name="search" placeholder="Поиск по названию" class="search-input" value="{{ search_query|default:'' }}">
             <button type="submit" class="search-button">Найти</button>
         </form>
@@ -44,7 +44,7 @@
                 </div>
             </a>
         {% else %}
-            <div class="cart-icon-link" style="pointer-events: none; cursor: default;" title="Добавьте препараты в заявку">
+            <div class="cart-icon-link cart-icon-disabled" title="Добавьте препараты в заявку">
                 <div class="icon-circle">
                     <span class="microscope">🔬</span>
                 </div>

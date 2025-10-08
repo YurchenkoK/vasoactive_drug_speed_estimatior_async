@@ -25,16 +25,13 @@
                     <p><strong>Концентрация ампулы:</strong> {{ drug.concentration }}</p>
                     <p><strong>Объём ампулы:</strong> {{ drug.volume }}{% if drug.volume == '5 мл' %}, 5 мл, 10 мл{% endif %}</p>
                     <p><strong>Показания:</strong> {{ drug.description }}</p>
+                    <form method="POST" action="{% url 'add_to_order' drug.id %}" class="drug-detail-form">
+                        {% csrf_token %}
+                        <button type="submit" class="details-button">
+                            Добавить к расчётам
+                        </button>
+                    </form>
                 </div>
-                <form method="POST" action="{% url 'add_to_order' drug.id %}" style="margin-top: 20px;">
-                    {% csrf_token %}
-                    <label for="dosage"><strong>Дозировка (мкг/кг/мин):</strong></label>
-                    <input type="number" name="dosage" id="dosage" value="5.0" step="0.1" min="0.1" 
-                           style="margin-left: 10px; padding: 5px; width: 100px;">
-                    <button type="submit" class="details-button" style="margin-left: 10px;">
-                        Добавить в заявку
-                    </button>
-                </form>
             </div>
         </div>
     </div>
@@ -47,7 +44,7 @@
                 </div>
             </a>
         {% else %}
-            <div class="cart-icon-link" style="pointer-events: none; cursor: default;" title="Добавьте препараты в заявку">
+            <div class="cart-icon-link cart-icon-disabled" title="Добавьте препараты в заявку">
                 <div class="icon-circle">
                     <span class="microscope">🔬</span>
                 </div>

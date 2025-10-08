@@ -20,15 +20,15 @@
                 <div class="calculator-form">
                     <div class="form-row">
                         <label>Количество ампул (шт):</label>
-                        <input type="number" name="ampoules_count" step="1" min="1" class="calc-input" value="{{ data.estimation_params.ampoules }}" placeholder="">
+                        <input type="number" name="ampoules_count" step="1" min="1" class="calc-input" value="{{ data.estimation_params.ampoules }}">
                     </div>
                     <div class="form-row">
                         <label>Объём растворителя (мл):</label>
-                        <input type="number" name="solvent_volume" step="0.01" min="0.01" class="calc-input" value="{{ data.estimation_params.solvent_volume }}" placeholder="">
+                        <input type="number" name="solvent_volume" step="0.01" min="0.01" class="calc-input" value="{{ data.estimation_params.solvent_volume }}">
                     </div>
                     <div class="form-row">
                         <label>Масса пациента (кг):</label>
-                        <input type="number" name="patient_weight" step="0.01" min="0.01" class="calc-input" value="{{ data.estimation_params.patient_weight }}" placeholder="">
+                        <input type="number" name="patient_weight" step="0.01" min="0.01" class="calc-input" value="{{ data.estimation_params.patient_weight }}">
                     </div>
                     <div class="form-row button-row">
                         <button type="submit" class="search-button button-flex">
@@ -42,7 +42,7 @@
                             </button>
                             {% else %}
                             <button type="button" class="search-button button-flex button-danger" 
-                                    onclick="if(confirm('Вы уверены, что хотите удалить эту заявку?')) document.getElementById('delete-form-{{ data.order_id }}').submit();">
+                                    onclick="document.getElementById('delete-form-{{ data.order_id }}').submit();">
                                 Удалить заявку
                             </button>
                             {% endif %}
@@ -81,7 +81,7 @@
                 {% if data.order_status == 'FORMED' %}
                 <div class="form-row form-row-spacing">
                     <button type="button" class="search-button button-full-width button-success" 
-                            onclick="if(confirm('Вы уверены, что хотите завершить эту заявку?')) document.getElementById('complete-form-formed-{{ data.order_id }}').submit();">
+                            onclick="document.getElementById('complete-form-formed-{{ data.order_id }}').submit();">
                         Завершить заявку
                     </button>
                 </div>
@@ -114,8 +114,8 @@
                             <span class="spec-value">{{ item.volume }}</span>
                         </div>
                         <div class="spec-item infusion-speed">
-                            <span class="spec-label">Скорость инфузии:</span>
-                            <span class="spec-value-result">{% if item.infusion_speed %}{{ item.infusion_speed }} мл/ч{% endif %}</span>
+                            <span class="spec-label">Скорость введения:</span>
+                            <span class="spec-value-result">{% if item.drug_rate %}{{ item.drug_rate }} мг/кг/ч{% endif %}</span>
                         </div>
                     </div>
                 </div>
