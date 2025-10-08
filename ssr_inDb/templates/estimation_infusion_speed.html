@@ -13,32 +13,85 @@
     <div class="cart-container">
         <h2 class="cart-title">Расчет скорости инфузии</h2>
         
-        {% if data.order_id %}
-        <form method="POST" action="{% url 'delete_order' data.order_id %}" style="text-align: right; margin-bottom: 20px;">
+        {% if data.order_status == 'DRAFT' %}
+        <form method="POST" action="{% url 'update_order_params' data.order_id %}">
             {% csrf_token %}
-            <button type="submit" class="search-button" style="background-color: #dc3545;" 
-                    onclick="return confirm('Вы уверены, что хотите удалить эту заявку?');">
-                Удалить заявку
-            </button>
+            <div class="infusion-calculator">
+                <div class="calculator-form">
+                    <div class="form-row">
+                        <label>Количество ампул (шт):</label>
+                        <input type="number" name="ampoules_count" step="1" min="1" class="calc-input" value="{{ data.estimation_params.ampoules }}" placeholder="">
+                    </div>
+                    <div class="form-row">
+                        <label>Объём растворителя (мл):</label>
+                        <input type="number" name="solvent_volume" step="0.01" min="0.01" class="calc-input" value="{{ data.estimation_params.solvent_volume }}" placeholder="">
+                    </div>
+                    <div class="form-row">
+                        <label>Масса пациента (кг):</label>
+                        <input type="number" name="patient_weight" step="0.01" min="0.01" class="calc-input" value="{{ data.estimation_params.patient_weight }}" placeholder="">
+                    </div>
+                    <div class="form-row button-row">
+                        <button type="submit" class="search-button button-flex">
+                            Рассчитать скорость инфузии
+                        </button>
+                        {% if data.order_id %}
+                            {% if data.estimation_params.ampoules and data.estimation_params.solvent_volume and data.estimation_params.patient_weight %}
+                            <button type="button" class="search-button button-flex button-success" 
+                                    onclick="document.getElementById('complete-form-{{ data.order_id }}').submit();">
+                                Завершить заявку
+                            </button>
+                            {% else %}
+                            <button type="button" class="search-button button-flex button-danger" 
+                                    onclick="if(confirm('Вы уверены, что хотите удалить эту заявку?')) document.getElementById('delete-form-{{ data.order_id }}').submit();">
+                                Удалить заявку
+                            </button>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
         </form>
-        {% endif %}
         
+        {% if data.order_id %}
+            {% if data.estimation_params.ampoules and data.estimation_params.solvent_volume and data.estimation_params.patient_weight %}
+            <form id="complete-form-{{ data.order_id }}" method="POST" action="{% url 'complete_order' data.order_id %}" class="hidden-form">
+                {% csrf_token %}
+            </form>
+            {% else %}
+            <form id="delete-form-{{ data.order_id }}" method="POST" action="{% url 'delete_order' data.order_id %}" class="hidden-form">
+                {% csrf_token %}
+            </form>
+            {% endif %}
+        {% endif %}
+        {% else %}
         <div class="infusion-calculator">
             <div class="calculator-form">
                 <div class="form-row">
                     <label>Количество ампул:</label>
-                    <input type="text" placeholder="Введите кол-во" class="calc-input" value="{{ data.estimation_params.ampoules }}">
+                    <input type="number" class="calc-input" value="{{ data.estimation_params.ampoules }}" readonly>
                 </div>
                 <div class="form-row">
                     <label>Объём растворителя:</label>
-                    <input type="text" placeholder="Введите объём" class="calc-input" value="{{ data.estimation_params.solvent_volume }}">
+                    <input type="number" class="calc-input" value="{{ data.estimation_params.solvent_volume }}" readonly>
                 </div>
                 <div class="form-row">
                     <label>Масса пациента:</label>
-                    <input type="text" placeholder="Введите массу" class="calc-input" value="{{ data.estimation_params.patient_weight }}">
+                    <input type="number" class="calc-input" value="{{ data.estimation_params.patient_weight }}" readonly>
                 </div>
+                {% if data.order_status == 'FORMED' %}
+                <div class="form-row form-row-spacing">
+                    <button type="button" class="search-button button-full-width button-success" 
+                            onclick="if(confirm('Вы уверены, что хотите завершить эту заявку?')) document.getElementById('complete-form-formed-{{ data.order_id }}').submit();">
+                        Завершить заявку
+                    </button>
+                </div>
+                <form id="complete-form-formed-{{ data.order_id }}" method="POST" action="{% url 'complete_order' data.order_id %}" class="hidden-form">
+                    {% csrf_token %}
+                </form>
+                {% endif %}
             </div>
         </div>
+        {% endif %}
         
         <div class="results-section">
             {% for item in data.estimation_items %}
@@ -62,14 +115,11 @@
                         </div>
                         <div class="spec-item infusion-speed">
                             <span class="spec-label">Скорость инфузии:</span>
-                            <span class="spec-value-result">{{ item.infusion_speed }} мл/ч</span>
+                            <span class="spec-value-result">{% if item.infusion_speed %}{{ item.infusion_speed }} мл/ч{% endif %}</span>
                         </div>
                     </div>
                 </div>
             {% empty %}
-                <p style="text-align: center; padding: 20px; color: #666;">
-                    Заявка пуста. Добавьте препараты из каталога.
-                </p>
             {% endfor %}
         </div>
     </div>

@@ -22,10 +22,18 @@ class DrugAdmin(admin.ModelAdmin):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('id', 'status', 'creator', 'creation_datetime', 'completion_datetime')
+    list_display = ('id', 'status', 'creator', 'ampoules_count', 'solvent_volume', 'patient_weight', 'creation_datetime', 'completion_datetime')
     list_filter = ('status', 'creation_datetime')
     search_fields = ('creator__username',)
     readonly_fields = ('creation_datetime',)
+    fieldsets = (
+        ('Общая информация', {
+            'fields': ('status', 'creator', 'moderator', 'creation_datetime', 'completion_datetime')
+        }),
+        ('Параметры расчета', {
+            'fields': ('ampoules_count', 'solvent_volume', 'patient_weight')
+        }),
+    )
     actions = ['mark_as_formed', 'mark_as_completed', 'mark_as_rejected', 'mark_as_deleted']
     
     @admin.action(description='Пометить как "Сформирован"')

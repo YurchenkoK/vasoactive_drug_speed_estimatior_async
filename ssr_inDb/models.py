@@ -32,9 +32,9 @@ class Order(models.Model):
     completion_datetime = models.DateTimeField(blank=True, null=True, verbose_name="Дата завершения")
     creator = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='created_orders', verbose_name="Создатель")
     moderator = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='moderated_orders', blank=True, null=True, verbose_name="Модератор")
-    ampoules_count = models.IntegerField(default=1, verbose_name="Количество ампул")
-    solvent_volume = models.DecimalField(max_digits=10, decimal_places=2, default=100.0, verbose_name="Объём растворителя (мл)")
-    patient_weight = models.DecimalField(max_digits=10, decimal_places=2, default=70.0, verbose_name="Масса пациента (кг)")
+    ampoules_count = models.IntegerField(blank=True, null=True, verbose_name="Количество ампул")
+    solvent_volume = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, verbose_name="Объём растворителя (мл)")
+    patient_weight = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, verbose_name="Масса пациента (кг)")
     
     class Meta:
         db_table = 'ssr_inDb_order'

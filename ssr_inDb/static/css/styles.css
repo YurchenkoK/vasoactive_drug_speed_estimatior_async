@@ -217,7 +217,7 @@ body {
     font-size: 14px;
     flex: 1;
     min-width: 0;
-    max-width: 350px;
+    max-width: 330px;
     background-color: #f8f9fa;
     color: #333;
 }
@@ -365,4 +365,45 @@ body {
 
 .microscope {
     font-size: 32px;
+}
+
+/* Стили для кнопок управления заявками */
+.button-row {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+.button-flex {
+    flex: 1;
+}
+
+.button-success {
+    background-color: #28a745;
+}
+
+.button-success:hover {
+    background-color: #218838;
+}
+
+.button-danger {
+    background-color: #dc3545;
+}
+
+.button-danger:hover {
+    background-color: #c82333;
+}
+
+.button-full-width {
+    width: 100%;
+}
+
+/* Скрытые формы */
+.hidden-form {
+    display: none;
+}
+
+/* Стили для readonly полей в статусе FORMED */
+.form-row-spacing {
+    margin-top: 20px;
 }

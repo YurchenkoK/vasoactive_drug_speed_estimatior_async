@@ -39,14 +39,20 @@
         </div>
     </div>
     <div class="footer">
-        <a href="{% url 'estimation_infusion_speed' %}" class="cart-icon-link">
-            <div class="icon-circle">
-                <span class="microscope">🔬</span>
-                {% if estimation_count > 0 %}
+        {% if estimation_count > 0 %}
+            <a href="{% url 'estimation_infusion_speed_with_id' order_id %}" class="cart-icon-link">
+                <div class="icon-circle">
+                    <span class="microscope">🔬</span>
                     <span class="cart-badge">{{ estimation_count }}</span>
-                {% endif %}
+                </div>
+            </a>
+        {% else %}
+            <div class="cart-icon-link" style="pointer-events: none; cursor: default;" title="Добавьте препараты в заявку">
+                <div class="icon-circle">
+                    <span class="microscope">🔬</span>
+                </div>
             </div>
-        </a>
+        {% endif %}
     </div>
 </body>
 </html>
