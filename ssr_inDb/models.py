@@ -11,6 +11,7 @@ class Drug(models.Model):
     is_active = models.BooleanField(default=True, verbose_name="Активен")
     
     class Meta:
+        db_table = 'ssr_inDb_drug'
         verbose_name = "Препарат"
         verbose_name_plural = "Препараты"
     
@@ -28,7 +29,6 @@ class Order(models.Model):
     
     status = models.CharField(max_length=10, choices=OrderStatus.choices, default=OrderStatus.DRAFT, verbose_name="Статус")
     creation_datetime = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
-    formation_datetime = models.DateTimeField(blank=True, null=True, verbose_name="Дата формирования")
     completion_datetime = models.DateTimeField(blank=True, null=True, verbose_name="Дата завершения")
     creator = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='created_orders', verbose_name="Создатель")
     moderator = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='moderated_orders', blank=True, null=True, verbose_name="Модератор")
@@ -37,6 +37,7 @@ class Order(models.Model):
     patient_weight = models.DecimalField(max_digits=10, decimal_places=2, default=70.0, verbose_name="Масса пациента (кг)")
     
     class Meta:
+        db_table = 'ssr_inDb_order'
         verbose_name = "Заявка"
         verbose_name_plural = "Заявки"
     
@@ -51,6 +52,7 @@ class DrugInOrder(models.Model):
     infusion_speed = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Скорость инфузии (мл/ч)")
     
     class Meta:
+        db_table = 'ssr_inDb_druginorder'
         verbose_name = "Препарат в заявке"
         verbose_name_plural = "Препараты в заявках"
         unique_together = ('order', 'drug')

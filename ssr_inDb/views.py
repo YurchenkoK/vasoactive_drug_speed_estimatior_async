@@ -134,6 +134,6 @@ def delete_order(request, order_id):
         return redirect('estimation_infusion_speed')
     
     with connection.cursor() as cursor:
-        cursor.execute("UPDATE ssr_indb_order SET status = %s WHERE id = %s", [Order.OrderStatus.DELETED, order_id])
+        cursor.execute('UPDATE "ssr_inDb_order" SET status = %s WHERE id = %s', [Order.OrderStatus.DELETED, order_id])
     
     return redirect('index')
