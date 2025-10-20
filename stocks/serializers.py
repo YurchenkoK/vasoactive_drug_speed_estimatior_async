@@ -24,7 +24,8 @@ class DrugInOrderSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    creator = serializers.StringRelatedField(read_only=True)
+    creator = serializers.SlugRelatedField(slug_field='username', read_only=True)
+    moderator = serializers.SlugRelatedField(slug_field='username', read_only=True)
     
     class Meta:
         model = Order
@@ -36,8 +37,8 @@ class OrderSerializer(serializers.ModelSerializer):
 
 
 class FullOrderSerializer(serializers.ModelSerializer):
-    creator = serializers.StringRelatedField(read_only=True)
-    moderator = serializers.StringRelatedField(read_only=True)
+    creator = serializers.SlugRelatedField(slug_field='username', read_only=True)
+    moderator = serializers.SlugRelatedField(slug_field='username', read_only=True)
     druginorder_set = DrugInOrderSerializer(many=True, read_only=True)
     
     class Meta:

@@ -36,12 +36,13 @@ urlpatterns = [
     path('api/orders/<int:pk>/reject/', views.reject_order, name='order-reject'),
     
     # API endpoints для препаратов в заявке (м-м)
-    path('api/orders/<int:order_pk>/drugs/<int:drug_pk>/', views.remove_drug_from_order, name='drug-in-order-delete'),
-    path('api/orders/<int:order_pk>/drugs/<int:drug_pk>/update/', views.update_drug_in_order, name='drug-in-order-update'),
+    path('api/orders/<int:order_pk>/drugs/<int:drug_pk>/', views.drug_in_order_actions, name='drug-in-order'),
     
     # API endpoints для пользователей
-    path('api/users/', views.UsersList.as_view(), name='users-list'),
-    path('api/users/register/', views.UserRegistration.as_view(), name='user-register'),
+    path('api/register/', views.UserRegistration.as_view(), name='user-register'),
+    path('api/profile/', views.UserProfile.as_view(), name='user-profile'),
+    path('api/login/', views.user_login, name='user-login'),
+    path('api/logout/', views.user_logout, name='user-logout'),
     
     # DRF auth
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),

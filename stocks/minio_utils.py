@@ -7,23 +7,33 @@ from rest_framework.response import Response
 def process_file_upload(file_object: InMemoryUploadedFile, client, image_name):
     """Загружает файл в MinIO и возвращает URL"""
     try:
-        client.put_object('drug-logos', image_name, file_object, file_object.size)
-        return f"http://{settings.AWS_S3_ENDPOINT_URL}/drug-logos/{image_name}"
+        bucket_name = 'images'
+        
+        # Создаем bucket если его нет
+        if not client.bucket_exists(bucket_name):
+            client.make_bucket(bucket_name)
+        
+        client.put_object(bucket_name, image_name, file_object, file_object.size)
+        
+        # Используем localhost для доступа из браузера
+        return f"http://localhost:9000/{bucket_name}/{image_name}"
     except Exception as e:
         return {"error": str(e)}
 
 
 def add_pic(drug, pic):
     """Добавляет изображение для препарата в MinIO"""
+    # Убираем протокол из URL для MinIO client
+    endpoint = settings.AWS_S3_ENDPOINT_URL.replace('http://', '').replace('https://', '')
     client = Minio(
-        endpoint=settings.AWS_S3_ENDPOINT_URL,
+        endpoint=endpoint,
         access_key=settings.AWS_ACCESS_KEY_ID,
         secret_key=settings.AWS_SECRET_ACCESS_KEY,
         secure=settings.MINIO_USE_SSL
     )
     
-    # Создаем имя файла на основе ID препарата
-    img_obj_name = f"{drug.id}.png"
+    # Используем оригинальное название файла
+    img_obj_name = pic.name
     
     if not pic:
         return Response({"error": "Нет файла для изображения логотипа."})
@@ -46,14 +56,17 @@ def delete_pic(drug):
         return
     
     try:
+        # Убираем протокол из URL для MinIO client
+        endpoint = settings.AWS_S3_ENDPOINT_URL.replace('http://', '').replace('https://', '')
         client = Minio(
-            endpoint=settings.AWS_S3_ENDPOINT_URL,
+            endpoint=endpoint,
             access_key=settings.AWS_ACCESS_KEY_ID,
             secret_key=settings.AWS_SECRET_ACCESS_KEY,
             secure=settings.MINIO_USE_SSL
         )
         
-        img_obj_name = f"{drug.id}.png"
-        client.remove_object('drug-logos', img_obj_name)
+        # Извлекаем имя файла из URL
+        img_obj_name = drug.image_url.split('/')[-1]
+        client.remove_object('images', img_obj_name)
     except Exception as e:
         print(f"Error deleting image: {e}")

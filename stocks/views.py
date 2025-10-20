@@ -16,17 +16,18 @@ from stocks.models import Drug, Order, DrugInOrder
 from stocks.minio_utils import add_pic, delete_pic
 
 
-def get_or_create_user():
+def get_user():
+    """Singleton для получения пользователя admin"""
     try:
-        user = User.objects.get(id=1)
+        user = User.objects.get(id=1)  # admin
     except User.DoesNotExist:
         user = User.objects.create_user(
             id=1,
-            username="creator1",
-            first_name="Иван",
-            last_name="Иванов",
-            password="password123",
-            email="ivan@example.com"
+            username="admin",
+            first_name="Admin",
+            last_name="Admin",
+            password="admin",
+            email="admin@example.com"
         )
     return user
 
@@ -96,7 +97,7 @@ def add_drug_image(request, pk):
 @api_view(['POST'])
 def add_drug_to_order(request, pk):
     drug = get_object_or_404(Drug, pk=pk, is_active=True)
-    user = get_or_create_user()
+    user = get_user()
     order, created = Order.objects.get_or_create(
         creator=user,
         status=Order.OrderStatus.DRAFT,
@@ -111,7 +112,7 @@ def add_drug_to_order(request, pk):
 
 @api_view(['GET'])
 def cart_icon(request):
-    user = get_or_create_user()
+    user = get_user()
     try:
         order = Order.objects.get(creator=user, status=Order.OrderStatus.DRAFT)
         count = DrugInOrder.objects.filter(order=order).count()
@@ -122,19 +123,21 @@ def cart_icon(request):
 
 class OrderList(APIView):
     def get(self, request, format=None):
-        user = get_or_create_user()
+        user = get_user()
+        # Исключаем удаленные и черновики
         orders = Order.objects.filter(creator=user).exclude(
             status__in=[Order.OrderStatus.DELETED, Order.OrderStatus.DRAFT]
         )
-        status_filter = request.query_params.get('status', None)
-        if status_filter:
-            orders = orders.filter(status=status_filter)
+        
+        # Фильтр по диапазону даты создания (опционально)
         date_from = request.query_params.get('date_from', None)
         date_to = request.query_params.get('date_to', None)
         if date_from:
-            orders = orders.filter(formation_datetime__gte=date_from)
+            orders = orders.filter(creation_datetime__gte=date_from)
         if date_to:
-            orders = orders.filter(formation_datetime__lte=date_to)
+            orders = orders.filter(creation_datetime__lte=date_to)
+        
+        orders = orders.order_by('status', '-creation_datetime')
         serializer = OrderSerializer(orders, many=True)
         return Response(serializer.data)
 
@@ -149,9 +152,6 @@ class OrderDetail(APIView):
     
     def put(self, request, pk, format=None):
         order = get_object_or_404(Order, pk=pk)
-        if order.status != Order.OrderStatus.DRAFT:
-            return Response({"error": "Можно изменять только черновик"}, 
-                          status=status.HTTP_403_FORBIDDEN)
         serializer = OrderSerializer(order, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -168,12 +168,8 @@ class OrderDetail(APIView):
 @api_view(['PUT'])
 def form_order(request, pk):
     order = get_object_or_404(Order, pk=pk)
-    user = get_or_create_user()
     if order.status != Order.OrderStatus.DRAFT:
         return Response({"error": "Можно формировать только черновик"}, 
-                       status=status.HTTP_403_FORBIDDEN)
-    if order.creator != user:
-        return Response({"error": "Только создатель может сформировать заявку"}, 
                        status=status.HTTP_403_FORBIDDEN)
     if not order.ampoules_count or not order.solvent_volume or not order.patient_weight:
         return Response({"error": "Заполните все обязательные поля"}, 
@@ -191,13 +187,13 @@ def form_order(request, pk):
 @api_view(['PUT'])
 def complete_order(request, pk):
     order = get_object_or_404(Order, pk=pk)
-    moderator = get_or_create_user()
+    user = get_user()
     if order.status != Order.OrderStatus.FORMED:
         return Response({"error": "Можно завершать только сформированную заявку"}, 
                        status=status.HTTP_403_FORBIDDEN)
     order.status = Order.OrderStatus.COMPLETED
     order.completion_datetime = timezone.now()
-    order.moderator = moderator
+    order.moderator = user
     order.save()
     for drug_in_order in DrugInOrder.objects.filter(order=order):
         drug_in_order.calculate_infusion_speed()
@@ -209,37 +205,37 @@ def complete_order(request, pk):
 @api_view(['PUT'])
 def reject_order(request, pk):
     order = get_object_or_404(Order, pk=pk)
-    moderator = get_or_create_user()
+    user = get_user()
     if order.status != Order.OrderStatus.FORMED:
         return Response({"error": "Можно отклонять только сформированную заявку"}, 
                        status=status.HTTP_403_FORBIDDEN)
     order.status = Order.OrderStatus.REJECTED
     order.completion_datetime = timezone.now()
-    order.moderator = moderator
+    order.moderator = user
     order.save()
     serializer = FullOrderSerializer(order)
     return Response(serializer.data)
 
 
-@api_view(['DELETE'])
-def remove_drug_from_order(request, order_pk, drug_pk):
-    order = get_object_or_404(Order, pk=order_pk)
-    if order.status != Order.OrderStatus.DRAFT:
-        return Response({"error": "Можно удалять препараты только из черновика"}, 
-                       status=status.HTTP_403_FORBIDDEN)
-    drug_in_order = get_object_or_404(DrugInOrder, order=order, drug_id=drug_pk)
-    drug_in_order.delete()
-    return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-@api_view(['PUT'])
-def update_drug_in_order(request, order_pk, drug_pk):
+@api_view(['DELETE', 'PUT'])
+def drug_in_order_actions(request, order_pk, drug_pk):
     order = get_object_or_404(Order, pk=order_pk)
     if order.status != Order.OrderStatus.DRAFT:
         return Response({"error": "Можно изменять препараты только в черновике"}, 
                        status=status.HTTP_403_FORBIDDEN)
+    
     drug_in_order = get_object_or_404(DrugInOrder, order=order, drug_id=drug_pk)
-    return Response({"message": "Обновлено успешно"})
+    
+    if request.method == 'DELETE':
+        drug_in_order.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
+    elif request.method == 'PUT':
+        drug_rate = request.data.get('drug_rate')
+        if drug_rate is not None:
+            drug_in_order.drug_rate = drug_rate
+            drug_in_order.save()
+        return Response({"message": "Обновлено успешно"})
 
 
 class UserRegistration(APIView):
@@ -255,11 +251,50 @@ class UserRegistration(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class UsersList(APIView):
+class UserProfile(APIView):
     def get(self, request, format=None):
-        users = User.objects.all()
-        serializer = UserSerializer(users, many=True)
+        user = get_user()
+        serializer = UserSerializer(user)
         return Response(serializer.data)
+    
+    def put(self, request, format=None):
+        user = get_user()
+        serializer = UserSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+def user_login(request):
+    username = request.data.get('username')
+    password = request.data.get('password')
+    
+    if not username or not password:
+        return Response({"error": "Укажите username и password"}, 
+                       status=status.HTTP_400_BAD_REQUEST)
+    
+    from django.contrib.auth import authenticate
+    user = authenticate(username=username, password=password)
+    
+    if user is not None:
+        return Response({
+            "id": user.id,
+            "username": user.username,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "email": user.email,
+            "message": "Успешная аутентификация"
+        })
+    else:
+        return Response({"error": "Неверные учетные данные"}, 
+                       status=status.HTTP_401_UNAUTHORIZED)
+
+
+@api_view(['POST'])
+def user_logout(request):
+    return Response({"message": "Деавторизация выполнена"})
 
 
 def search(request):
@@ -413,6 +448,9 @@ def update_order_params(request, order_id):
     except (ValueError, TypeError):
         return redirect('estimation_infusion_speed_with_id', order_id=order_id)
     
+    # Меняем статус на FORMED и добавляем дату формирования
+    order.status = Order.OrderStatus.FORMED
+    order.formation_datetime = timezone.now()
     order.save()
     
     drugs_in_order = DrugInOrder.objects.filter(order=order)
