@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('ssr_inDb', '0001_initial_squashed_0008_alter_druginorder_drug_rate'),
+        ('stocks', '0001_initial_squashed_0008_alter_druginorder_drug_rate'),
     ]
 
     operations = [

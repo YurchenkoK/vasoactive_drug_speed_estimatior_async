@@ -7,7 +7,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    replaces = [('ssr_inDb', '0001_initial'), ('ssr_inDb', '0002_alter_drug_table_alter_druginorder_table_and_more'), ('ssr_inDb', '0003_remove_order_formation_datetime'), ('ssr_inDb', '0004_alter_order_ampoules_count_and_more'), ('ssr_inDb', '0005_remove_druginorder_dosage_and_more'), ('ssr_inDb', '0006_remove_druginorder_concentration_in_solution_and_more'), ('ssr_inDb', '0007_druginorder_drug_rate'), ('ssr_inDb', '0008_alter_druginorder_drug_rate')]
+    replaces = [('stocks', '0001_initial'), ('stocks', '0002_alter_drug_table_alter_druginorder_table_and_more'), ('stocks', '0003_remove_order_formation_datetime'), ('stocks', '0004_alter_order_ampoules_count_and_more'), ('stocks', '0005_remove_druginorder_dosage_and_more'), ('stocks', '0006_remove_druginorder_concentration_in_solution_and_more'), ('stocks', '0007_druginorder_drug_rate'), ('stocks', '0008_alter_druginorder_drug_rate')]
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
@@ -28,7 +28,7 @@ class Migration(migrations.Migration):
             options={
                 'verbose_name': 'Препарат',
                 'verbose_name_plural': 'Препараты',
-                'db_table': 'ssr_inDb_drug',
+                'db_table': 'stocks_drug',
             },
         ),
         migrations.CreateModel(
@@ -48,22 +48,22 @@ class Migration(migrations.Migration):
             options={
                 'verbose_name': 'Заявка',
                 'verbose_name_plural': 'Заявки',
-                'db_table': 'ssr_inDb_order',
+                'db_table': 'stocks_order',
             },
         ),
         migrations.CreateModel(
             name='DrugInOrder',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('drug', models.ForeignKey(on_delete=django.db.models.deletion.DO_NOTHING, to='ssr_inDb.drug', verbose_name='Препарат')),
-                ('order', models.ForeignKey(on_delete=django.db.models.deletion.DO_NOTHING, to='ssr_inDb.order', verbose_name='Заявка')),
+                ('drug', models.ForeignKey(on_delete=django.db.models.deletion.DO_NOTHING, to='stocks.drug', verbose_name='Препарат')),
+                ('order', models.ForeignKey(on_delete=django.db.models.deletion.DO_NOTHING, to='stocks.order', verbose_name='Заявка')),
                 ('infusion_speed', models.DecimalField(blank=True, decimal_places=2, max_digits=10, null=True, verbose_name='Скорость инфузии (мл/мин)')),
                 ('drug_rate', models.DecimalField(blank=True, decimal_places=2, max_digits=10, null=True, verbose_name='Скорость введения (мг/кг/час)')),
             ],
             options={
                 'verbose_name': 'Препарат в заявке',
                 'verbose_name_plural': 'Препараты в заявках',
-                'db_table': 'ssr_inDb_druginorder',
+                'db_table': 'stocks_druginorder',
                 'unique_together': {('order', 'drug')},
             },
         ),

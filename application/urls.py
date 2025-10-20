@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.urls import path
-from ssr_inDb import views
+from stocks import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
