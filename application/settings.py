@@ -15,7 +15,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'stocks'
+    
+    # DRF
+    'rest_framework',
+    
+    # Наше приложение
+    'stocks',
 ]
 
 MIDDLEWARE = [
@@ -76,3 +81,10 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# MinIO Settings
+AWS_STORAGE_BUCKET_NAME = 'drug-logos'
+AWS_ACCESS_KEY_ID = 'minioadmin'
+AWS_SECRET_ACCESS_KEY = 'minioadmin'
+AWS_S3_ENDPOINT_URL = 'minio:9000'
+MINIO_USE_SSL = False

@@ -1,8 +1,265 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from rest_framework.response import Response
+from django.shortcuts import get_object_or_404, render, redirect
+from rest_framework import status
+from rest_framework.views import APIView
+from rest_framework.decorators import api_view
+from django.contrib.auth.models import User
+from django.utils import timezone
 from django.http import Http404
 from django.db import connection
-from django.contrib.auth.models import User
-from .models import Drug, Order, DrugInOrder
+
+from stocks.serializers import (
+    DrugSerializer, FullDrugSerializer, OrderSerializer, 
+    FullOrderSerializer, UserSerializer, UserRegistrationSerializer
+)
+from stocks.models import Drug, Order, DrugInOrder
+from stocks.minio_utils import add_pic, delete_pic
+
+
+def get_or_create_user():
+    try:
+        user = User.objects.get(id=1)
+    except User.DoesNotExist:
+        user = User.objects.create_user(
+            id=1,
+            username="creator1",
+            first_name="Иван",
+            last_name="Иванов",
+            password="password123",
+            email="ivan@example.com"
+        )
+    return user
+
+
+class DrugList(APIView):
+    def get(self, request, format=None):
+        drugs = Drug.objects.filter(is_active=True)
+        name = request.query_params.get('name', None)
+        if name:
+            drugs = drugs.filter(name__icontains=name)
+        serializer = DrugSerializer(drugs, many=True)
+        return Response(serializer.data)
+    
+    def post(self, request, format=None):
+        serializer = DrugSerializer(data=request.data)
+        if serializer.is_valid():
+            drug = serializer.save()
+            pic = request.FILES.get("pic")
+            if pic:
+                pic_result = add_pic(drug, pic)
+                if hasattr(pic_result, 'data') and 'error' in pic_result.data:
+                    return pic_result
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DrugDetail(APIView):
+    def get(self, request, pk, format=None):
+        drug = get_object_or_404(Drug, pk=pk, is_active=True)
+        serializer = FullDrugSerializer(drug)
+        return Response(serializer.data)
+    
+    def put(self, request, pk, format=None):
+        drug = get_object_or_404(Drug, pk=pk)
+        serializer = DrugSerializer(drug, data=request.data, partial=True)
+        if 'pic' in request.FILES:
+            pic_result = add_pic(drug, request.FILES['pic'])
+            if hasattr(pic_result, 'data') and 'error' in pic_result.data:
+                return pic_result
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, pk, format=None):
+        drug = get_object_or_404(Drug, pk=pk)
+        drug.is_active = False
+        drug.save()
+        delete_pic(drug)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['POST'])
+def add_drug_image(request, pk):
+    drug = get_object_or_404(Drug, pk=pk)
+    pic = request.FILES.get("pic")
+    if not pic:
+        return Response({"error": "Файл изображения не предоставлен"}, 
+                       status=status.HTTP_400_BAD_REQUEST)
+    pic_result = add_pic(drug, pic)
+    if hasattr(pic_result, 'data') and 'error' in pic_result.data:
+        return pic_result
+    serializer = DrugSerializer(drug)
+    return Response(serializer.data)
+
+
+@api_view(['POST'])
+def add_drug_to_order(request, pk):
+    drug = get_object_or_404(Drug, pk=pk, is_active=True)
+    user = get_or_create_user()
+    order, created = Order.objects.get_or_create(
+        creator=user,
+        status=Order.OrderStatus.DRAFT,
+        defaults={'creation_datetime': timezone.now()}
+    )
+    drug_in_order, created = DrugInOrder.objects.get_or_create(order=order, drug=drug)
+    if not created:
+        return Response({"message": "Препарат уже есть в заявке"}, status=status.HTTP_200_OK)
+    return Response({"message": "Препарат добавлен в заявку", "order_id": order.id}, 
+                   status=status.HTTP_201_CREATED)
+
+
+@api_view(['GET'])
+def cart_icon(request):
+    user = get_or_create_user()
+    try:
+        order = Order.objects.get(creator=user, status=Order.OrderStatus.DRAFT)
+        count = DrugInOrder.objects.filter(order=order).count()
+        return Response({"order_id": order.id, "count": count})
+    except Order.DoesNotExist:
+        return Response({"order_id": None, "count": 0})
+
+
+class OrderList(APIView):
+    def get(self, request, format=None):
+        user = get_or_create_user()
+        orders = Order.objects.filter(creator=user).exclude(
+            status__in=[Order.OrderStatus.DELETED, Order.OrderStatus.DRAFT]
+        )
+        status_filter = request.query_params.get('status', None)
+        if status_filter:
+            orders = orders.filter(status=status_filter)
+        date_from = request.query_params.get('date_from', None)
+        date_to = request.query_params.get('date_to', None)
+        if date_from:
+            orders = orders.filter(formation_datetime__gte=date_from)
+        if date_to:
+            orders = orders.filter(formation_datetime__lte=date_to)
+        serializer = OrderSerializer(orders, many=True)
+        return Response(serializer.data)
+
+
+class OrderDetail(APIView):
+    def get(self, request, pk, format=None):
+        order = get_object_or_404(Order, pk=pk)
+        if order.status == Order.OrderStatus.DELETED:
+            return Response({"error": "Заявка удалена"}, status=status.HTTP_404_NOT_FOUND)
+        serializer = FullOrderSerializer(order)
+        return Response(serializer.data)
+    
+    def put(self, request, pk, format=None):
+        order = get_object_or_404(Order, pk=pk)
+        if order.status != Order.OrderStatus.DRAFT:
+            return Response({"error": "Можно изменять только черновик"}, 
+                          status=status.HTTP_403_FORBIDDEN)
+        serializer = OrderSerializer(order, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, pk, format=None):
+        order = get_object_or_404(Order, pk=pk)
+        order.status = Order.OrderStatus.DELETED
+        order.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['PUT'])
+def form_order(request, pk):
+    order = get_object_or_404(Order, pk=pk)
+    user = get_or_create_user()
+    if order.status != Order.OrderStatus.DRAFT:
+        return Response({"error": "Можно формировать только черновик"}, 
+                       status=status.HTTP_403_FORBIDDEN)
+    if order.creator != user:
+        return Response({"error": "Только создатель может сформировать заявку"}, 
+                       status=status.HTTP_403_FORBIDDEN)
+    if not order.ampoules_count or not order.solvent_volume or not order.patient_weight:
+        return Response({"error": "Заполните все обязательные поля"}, 
+                       status=status.HTTP_400_BAD_REQUEST)
+    if not DrugInOrder.objects.filter(order=order).exists():
+        return Response({"error": "В заявке должен быть хотя бы один препарат"}, 
+                       status=status.HTTP_400_BAD_REQUEST)
+    order.status = Order.OrderStatus.FORMED
+    order.formation_datetime = timezone.now()
+    order.save()
+    serializer = FullOrderSerializer(order)
+    return Response(serializer.data)
+
+
+@api_view(['PUT'])
+def complete_order(request, pk):
+    order = get_object_or_404(Order, pk=pk)
+    moderator = get_or_create_user()
+    if order.status != Order.OrderStatus.FORMED:
+        return Response({"error": "Можно завершать только сформированную заявку"}, 
+                       status=status.HTTP_403_FORBIDDEN)
+    order.status = Order.OrderStatus.COMPLETED
+    order.completion_datetime = timezone.now()
+    order.moderator = moderator
+    order.save()
+    for drug_in_order in DrugInOrder.objects.filter(order=order):
+        drug_in_order.calculate_infusion_speed()
+        drug_in_order.save()
+    serializer = FullOrderSerializer(order)
+    return Response(serializer.data)
+
+
+@api_view(['PUT'])
+def reject_order(request, pk):
+    order = get_object_or_404(Order, pk=pk)
+    moderator = get_or_create_user()
+    if order.status != Order.OrderStatus.FORMED:
+        return Response({"error": "Можно отклонять только сформированную заявку"}, 
+                       status=status.HTTP_403_FORBIDDEN)
+    order.status = Order.OrderStatus.REJECTED
+    order.completion_datetime = timezone.now()
+    order.moderator = moderator
+    order.save()
+    serializer = FullOrderSerializer(order)
+    return Response(serializer.data)
+
+
+@api_view(['DELETE'])
+def remove_drug_from_order(request, order_pk, drug_pk):
+    order = get_object_or_404(Order, pk=order_pk)
+    if order.status != Order.OrderStatus.DRAFT:
+        return Response({"error": "Можно удалять препараты только из черновика"}, 
+                       status=status.HTTP_403_FORBIDDEN)
+    drug_in_order = get_object_or_404(DrugInOrder, order=order, drug_id=drug_pk)
+    drug_in_order.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['PUT'])
+def update_drug_in_order(request, order_pk, drug_pk):
+    order = get_object_or_404(Order, pk=order_pk)
+    if order.status != Order.OrderStatus.DRAFT:
+        return Response({"error": "Можно изменять препараты только в черновике"}, 
+                       status=status.HTTP_403_FORBIDDEN)
+    drug_in_order = get_object_or_404(DrugInOrder, order=order, drug_id=drug_pk)
+    return Response({"message": "Обновлено успешно"})
+
+
+class UserRegistration(APIView):
+    def post(self, request, format=None):
+        serializer = UserRegistrationSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            return Response({
+                "id": user.id,
+                "username": user.username,
+                "message": "Пользователь успешно зарегистрирован"
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UsersList(APIView):
+    def get(self, request, format=None):
+        users = User.objects.all()
+        serializer = UserSerializer(users, many=True)
+        return Response(serializer.data)
 
 
 def search(request):
@@ -65,7 +322,7 @@ def vasoactive_drug_detail(request, drug_id):
     return render(request, 'vasoactive_drug.html', {'drug': drug_data, 'estimation_count': estimation_count, 'order_id': order_id})
 
 
-def add_to_order(request, drug_id):
+def add_to_order_html(request, drug_id):
     if request.method != 'POST':
         return redirect('search')
     
@@ -166,7 +423,7 @@ def update_order_params(request, order_id):
     return redirect('estimation_infusion_speed_with_id', order_id=order_id)
 
 
-def delete_order(request, order_id):
+def delete_order_html(request, order_id):
     if request.method != 'POST':
         return redirect('estimation_infusion_speed')
     
@@ -176,11 +433,10 @@ def delete_order(request, order_id):
     return redirect('search')
 
 
-def complete_order(request, order_id):
+def complete_order_html(request, order_id):
     if request.method != 'POST':
         return redirect('estimation_infusion_speed')
     
-    from django.utils import timezone
     order = get_object_or_404(Order, id=order_id, status__in=[Order.OrderStatus.DRAFT, Order.OrderStatus.FORMED])
     
     order.status = Order.OrderStatus.COMPLETED
