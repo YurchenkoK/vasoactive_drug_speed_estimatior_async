@@ -51,11 +51,9 @@ class FullOrderSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    created_orders = OrderSerializer(many=True, read_only=True)
-    
     class Meta:
         model = User
-        fields = ["id", "username", "first_name", "last_name", "email", "created_orders"]
+        fields = ["id", "username", "first_name", "last_name", "email"]
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):

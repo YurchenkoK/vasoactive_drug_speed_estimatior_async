@@ -8,7 +8,6 @@ router = routers.DefaultRouter()
 urlpatterns = [
     path('admin/', admin.site.urls),
     
-    # ===== HTML ИНТЕРФЕЙС (веб-сайт) =====
     path('', views.search, name='search'),
     path('vasoactive_drug/<int:drug_id>/', views.vasoactive_drug_detail, name='vasoactive_drug_detail'),
     path('add_to_order/<int:drug_id>/', views.add_to_order_html, name='add_to_order'),
@@ -18,16 +17,13 @@ urlpatterns = [
     path('complete_order/<int:order_id>/', views.complete_order_html, name='complete_order'),
     path('delete_order/<int:order_id>/', views.delete_order_html, name='delete_order'),
     
-    # ===== REST API (для Postman/Insomnia) =====
     path('api/', include(router.urls)),
     
-    # API endpoints для препаратов (Drug)
     path('api/drugs/', views.DrugList.as_view(), name='drug-list'),
     path('api/drugs/<int:pk>/', views.DrugDetail.as_view(), name='drug-detail'),
     path('api/drugs/<int:pk>/add-image/', views.add_drug_image, name='drug-add-image'),
     path('api/drugs/<int:pk>/add-to-order/', views.add_drug_to_order, name='drug-add-to-order'),
     
-    # API endpoints для заявок (Order)
     path('api/orders/cart/', views.cart_icon, name='cart-icon'),
     path('api/orders/', views.OrderList.as_view(), name='order-list'),
     path('api/orders/<int:pk>/', views.OrderDetail.as_view(), name='order-detail'),
@@ -35,15 +31,12 @@ urlpatterns = [
     path('api/orders/<int:pk>/complete/', views.complete_order, name='order-complete'),
     path('api/orders/<int:pk>/reject/', views.reject_order, name='order-reject'),
     
-    # API endpoints для препаратов в заявке (м-м)
     path('api/orders/<int:order_pk>/drugs/<int:drug_pk>/', views.drug_in_order_actions, name='drug-in-order'),
     
-    # API endpoints для пользователей
     path('api/register/', views.UserRegistration.as_view(), name='user-register'),
-    path('api/profile/', views.UserProfile.as_view(), name='user-profile'),
+    path('api/profile/<int:pk>/', views.UserProfile.as_view(), name='user-profile'),
     path('api/login/', views.user_login, name='user-login'),
     path('api/logout/', views.user_logout, name='user-logout'),
     
-    # DRF auth
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 ]

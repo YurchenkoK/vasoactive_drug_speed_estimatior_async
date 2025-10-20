@@ -16,10 +16,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     
-    # DRF
     'rest_framework',
     
-    # Наше приложение
     'stocks',
 ]
 
@@ -82,7 +80,6 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# MinIO Settings
 AWS_STORAGE_BUCKET_NAME = 'images'
 AWS_ACCESS_KEY_ID = 'root'
 AWS_SECRET_ACCESS_KEY = 'rootroot'

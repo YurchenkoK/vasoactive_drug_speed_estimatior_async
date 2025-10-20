@@ -17,9 +17,8 @@ from stocks.minio_utils import add_pic, delete_pic
 
 
 def get_user():
-    """Singleton для получения пользователя admin"""
     try:
-        user = User.objects.get(id=1)  # admin
+        user = User.objects.get(id=1)
     except User.DoesNotExist:
         user = User.objects.create_user(
             id=1,
@@ -124,12 +123,10 @@ def cart_icon(request):
 class OrderList(APIView):
     def get(self, request, format=None):
         user = get_user()
-        # Исключаем удаленные и черновики
         orders = Order.objects.filter(creator=user).exclude(
             status__in=[Order.OrderStatus.DELETED, Order.OrderStatus.DRAFT]
         )
         
-        # Фильтр по диапазону даты создания (опционально)
         date_from = request.query_params.get('date_from', None)
         date_to = request.query_params.get('date_to', None)
         if date_from:
@@ -252,13 +249,13 @@ class UserRegistration(APIView):
 
 
 class UserProfile(APIView):
-    def get(self, request, format=None):
-        user = get_user()
+    def get(self, request, pk, format=None):
+        user = get_object_or_404(User, pk=pk)
         serializer = UserSerializer(user)
         return Response(serializer.data)
     
-    def put(self, request, format=None):
-        user = get_user()
+    def put(self, request, pk, format=None):
+        user = get_object_or_404(User, pk=pk)
         serializer = UserSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -448,7 +445,6 @@ def update_order_params(request, order_id):
     except (ValueError, TypeError):
         return redirect('estimation_infusion_speed_with_id', order_id=order_id)
     
-    # Меняем статус на FORMED и добавляем дату формирования
     order.status = Order.OrderStatus.FORMED
     order.formation_datetime = timezone.now()
     order.save()
