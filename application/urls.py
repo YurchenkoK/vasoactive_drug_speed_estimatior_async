@@ -48,12 +48,10 @@ urlpatterns = [
     
     path('api/orders/<int:order_pk>/drugs/<int:drug_pk>/', views.drug_in_order_actions, name='drug-in-order'),
     
-    path('api/register/', views.UserRegistration.as_view(), name='user-register'),
-    path('api/profile/<int:pk>/', views.UserProfile.as_view(), name='user-profile'),
-    path('api/login/', views.user_login, name='user-login'),
-    path('api/logout/', views.user_logout, name='user-logout'),
-    
-    path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+   path('api/users/register/', views.UserRegistration.as_view(), name='user-register'),
+   path('api/users/profile/<int:pk>/', views.UserProfile.as_view(), name='user-profile'),
+   path('api/users/login/', views.user_login, name='user-login'),
+   path('api/users/logout/', views.user_logout, name='user-logout'),
     
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('swagger<format>/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
