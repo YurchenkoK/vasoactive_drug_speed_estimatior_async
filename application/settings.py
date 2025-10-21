@@ -17,6 +17,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     
     'rest_framework',
+    'drf_yasg',
     
     'stocks',
 ]
@@ -85,3 +86,46 @@ AWS_ACCESS_KEY_ID = 'root'
 AWS_SECRET_ACCESS_KEY = 'rootroot'
 AWS_S3_ENDPOINT_URL = 'http://minio:9000'
 MINIO_USE_SSL = False
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+    ]
+}
+
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        'basic': {
+            'type': 'basic'
+        },
+        'session': {
+            'type': 'apiKey',
+            'name': 'sessionid',
+            'in': 'cookie'
+        }
+    },
+    'USE_SESSION_AUTH': True,
+    'LOGIN_URL': '/api-auth/login/',
+    'LOGOUT_URL': '/api-auth/logout/',
+}
+
+# Redis configuration
+REDIS_HOST = '0.0.0.0'
+REDIS_PORT = 6379
+
+# Session configuration
+# Используем БД для хранения сессий (проще в настройке, работает из коробки)
+# Альтернатива: можно использовать Redis, но требуется настройка без AUTH
+SESSION_ENGINE = "django.contrib.sessions.backends.db"
+SESSION_COOKIE_AGE = 86400  # 24 hours
+SESSION_SAVE_EVERY_REQUEST = True
+
+# Для демонстрации "содержимого сессий" используем:
+# python manage.py shell
+# >>> from django.contrib.sessions.models import Session
+# >>> Session.objects.all()
+# Или SQL: SELECT * FROM django_session;

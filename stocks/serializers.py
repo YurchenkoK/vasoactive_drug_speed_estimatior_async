@@ -1,12 +1,20 @@
 from rest_framework import serializers
 from stocks.models import Drug, Order, DrugInOrder
 from django.contrib.auth.models import User
+from collections import OrderedDict
 
 
 class DrugSerializer(serializers.ModelSerializer):
     class Meta:
         model = Drug
         fields = ["id", "name", "description", "image_url", "concentration", "volume", "is_active"]
+    
+    def get_fields(self):
+        new_fields = OrderedDict()
+        for name, field in super().get_fields().items():
+            field.required = False
+            new_fields[name] = field
+        return new_fields
 
 
 class FullDrugSerializer(serializers.ModelSerializer):
@@ -33,7 +41,14 @@ class OrderSerializer(serializers.ModelSerializer):
                   "completion_datetime", "creator", "moderator", "ampoules_count", 
                   "solvent_volume", "patient_weight"]
         read_only_fields = ["creation_datetime", "formation_datetime", "completion_datetime", 
-                           "creator", "moderator"]
+                           "creator", "moderator", "status"]
+    
+    def get_fields(self):
+        new_fields = OrderedDict()
+        for name, field in super().get_fields().items():
+            field.required = False
+            new_fields[name] = field
+        return new_fields
 
 
 class FullOrderSerializer(serializers.ModelSerializer):

@@ -1,13 +1,28 @@
 from django.contrib import admin
 from django.urls import path, include
 from stocks import views
-from rest_framework import routers
+from rest_framework import routers, permissions
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
 
 router = routers.DefaultRouter()
+
+schema_view = get_schema_view(
+   openapi.Info(
+      title="Vasoactive Drugs API",
+      default_version='v1',
+      description="API для системы управления вазоактивными препаратами и заявками",
+      contact=openapi.Contact(email="contact@vasoactive.local"),
+      license=openapi.License(name="BSD License"),
+   ),
+   public=True,
+   permission_classes=(permissions.AllowAny,),
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     
+    # HTML views (не включаются в Swagger)
     path('', views.search, name='search'),
     path('vasoactive_drug/<int:drug_id>/', views.vasoactive_drug_detail, name='vasoactive_drug_detail'),
     path('add_to_order/<int:drug_id>/', views.add_to_order_html, name='add_to_order'),
@@ -39,4 +54,8 @@ urlpatterns = [
     path('api/logout/', views.user_logout, name='user-logout'),
     
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+    
+    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    path('swagger<format>/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
+    path('swagger.json', schema_view.without_ui(cache_timeout=0), name='schema-json-file'),
 ]

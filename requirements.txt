@@ -1,0 +1,7 @@
+Django>=5.0
+djangorestframework>=3.14
+psycopg2-binary>=2.9
+drf-yasg>=1.21
+redis>=6.0
+django-redis>=6.0
+boto3>=1.26

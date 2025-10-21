@@ -2,11 +2,16 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404, render, redirect
 from rest_framework import status
 from rest_framework.views import APIView
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from django.contrib.auth.models import User
 from django.utils import timezone
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.db import connection
+from django.contrib.auth import authenticate, login, logout
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 from stocks.serializers import (
     DrugSerializer, FullDrugSerializer, OrderSerializer, 
@@ -14,24 +19,36 @@ from stocks.serializers import (
 )
 from stocks.models import Drug, Order, DrugInOrder
 from stocks.minio_utils import add_pic, delete_pic
+from stocks.permissions import IsManager, IsAdmin
 
 
-def get_user():
-    try:
-        user = User.objects.get(id=1)
-    except User.DoesNotExist:
-        user = User.objects.create_user(
-            id=1,
-            username="admin",
-            first_name="Admin",
-            last_name="Admin",
-            password="admin",
-            email="admin@example.com"
-        )
-    return user
+def get_user(request):
+    """
+    Получение текущего пользователя из запроса
+    Если пользователь не аутентифицирован, возвращается None
+    """
+    if request.user.is_authenticated:
+        return request.user
+    return None
 
 
 class DrugList(APIView):
+    """
+    Список всех активных препаратов
+    GET: доступно всем (включая гостей)
+    POST: только для администраторов
+    """
+    authentication_classes = [SessionAuthentication, BasicAuthentication]
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    
+    @swagger_auto_schema(
+        operation_description="Получить список всех активных препаратов. Доступно без авторизации.",
+        manual_parameters=[
+            openapi.Parameter('name', openapi.IN_QUERY, type=openapi.TYPE_STRING, 
+                            description='Фильтр по названию препарата')
+        ],
+        responses={200: DrugSerializer(many=True)}
+    )
     def get(self, request, format=None):
         drugs = Drug.objects.filter(is_active=True)
         name = request.query_params.get('name', None)
@@ -40,38 +57,59 @@ class DrugList(APIView):
         serializer = DrugSerializer(drugs, many=True)
         return Response(serializer.data)
     
+    @swagger_auto_schema(
+        request_body=DrugSerializer,
+        responses={201: DrugSerializer, 400: 'Bad Request'}
+    )
     def post(self, request, format=None):
+        if not request.user.is_superuser:
+            return Response({"error": "Только администратор может добавлять препараты"}, 
+                          status=status.HTTP_403_FORBIDDEN)
         serializer = DrugSerializer(data=request.data)
         if serializer.is_valid():
             drug = serializer.save()
-            pic = request.FILES.get("pic")
-            if pic:
-                pic_result = add_pic(drug, pic)
-                if hasattr(pic_result, 'data') and 'error' in pic_result.data:
-                    return pic_result
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class DrugDetail(APIView):
+    """
+    Детальная информация о препарате
+    GET: доступно всем
+    PUT: только для администраторов
+    DELETE: только для администраторов
+    """
+    authentication_classes = [SessionAuthentication, BasicAuthentication]
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    
+    @swagger_auto_schema(
+        operation_description="Получить детальную информацию о препарате. Доступно без авторизации.",
+        responses={200: FullDrugSerializer, 404: 'Not Found'}
+    )
     def get(self, request, pk, format=None):
         drug = get_object_or_404(Drug, pk=pk, is_active=True)
         serializer = FullDrugSerializer(drug)
         return Response(serializer.data)
     
+    @swagger_auto_schema(
+        request_body=DrugSerializer,
+        responses={200: DrugSerializer, 400: 'Bad Request', 403: 'Forbidden'}
+    )
     def put(self, request, pk, format=None):
+        if not request.user.is_superuser:
+            return Response({"error": "Только администратор может редактировать препараты"}, 
+                          status=status.HTTP_403_FORBIDDEN)
         drug = get_object_or_404(Drug, pk=pk)
         serializer = DrugSerializer(drug, data=request.data, partial=True)
-        if 'pic' in request.FILES:
-            pic_result = add_pic(drug, request.FILES['pic'])
-            if hasattr(pic_result, 'data') and 'error' in pic_result.data:
-                return pic_result
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     def delete(self, request, pk, format=None):
+        if not request.user.is_superuser:
+            return Response({"error": "Только администратор может удалять препараты"}, 
+                          status=status.HTTP_403_FORBIDDEN)
         drug = get_object_or_404(Drug, pk=pk)
         drug.is_active = False
         drug.save()
@@ -79,8 +117,14 @@ class DrugDetail(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+@swagger_auto_schema(
+    method='post',
+    responses={200: DrugSerializer, 400: 'Bad Request', 403: 'Forbidden'}
+)
 @api_view(['POST'])
+@permission_classes([IsAdmin])
 def add_drug_image(request, pk):
+    """Добавление изображения к препарату (только администратор)"""
     drug = get_object_or_404(Drug, pk=pk)
     pic = request.FILES.get("pic")
     if not pic:
@@ -93,10 +137,16 @@ def add_drug_image(request, pk):
     return Response(serializer.data)
 
 
+@swagger_auto_schema(
+    method='post',
+    responses={201: 'Created', 200: 'Already exists', 401: 'Unauthorized'}
+)
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def add_drug_to_order(request, pk):
+    """Добавление препарата в заявку (требуется авторизация)"""
     drug = get_object_or_404(Drug, pk=pk, is_active=True)
-    user = get_user()
+    user = request.user
     order, created = Order.objects.get_or_create(
         creator=user,
         status=Order.OrderStatus.DRAFT,
@@ -109,9 +159,21 @@ def add_drug_to_order(request, pk):
                    status=status.HTTP_201_CREATED)
 
 
+@swagger_auto_schema(
+    method='get',
+    responses={200: openapi.Response('Cart info', schema=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'order_id': openapi.Schema(type=openapi.TYPE_INTEGER),
+            'count': openapi.Schema(type=openapi.TYPE_INTEGER),
+        }
+    ))}
+)
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def cart_icon(request):
-    user = get_user()
+    """Получение информации о корзине текущего пользователя"""
+    user = request.user
     try:
         order = Order.objects.get(creator=user, status=Order.OrderStatus.DRAFT)
         count = DrugInOrder.objects.filter(order=order).count()
@@ -121,18 +183,47 @@ def cart_icon(request):
 
 
 class OrderList(APIView):
+    """
+    Список заявок текущего пользователя
+    GET: только для аутентифицированных пользователей (свои заявки) или менеджеров (все заявки)
+    """
+    authentication_classes = [SessionAuthentication, BasicAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter('date_from', openapi.IN_QUERY, type=openapi.TYPE_STRING, format='date'),
+            openapi.Parameter('date_to', openapi.IN_QUERY, type=openapi.TYPE_STRING, format='date'),
+            openapi.Parameter('status', openapi.IN_QUERY, type=openapi.TYPE_STRING),
+        ],
+        responses={200: OrderSerializer(many=True)}
+    )
     def get(self, request, format=None):
-        user = get_user()
-        orders = Order.objects.filter(creator=user).exclude(
-            status__in=[Order.OrderStatus.DELETED, Order.OrderStatus.DRAFT]
-        )
+        user = request.user
         
+        # Менеджеры и администраторы видят все заявки
+        if user.is_staff or user.is_superuser:
+            orders = Order.objects.exclude(
+                status__in=[Order.OrderStatus.DELETED, Order.OrderStatus.DRAFT]
+            )
+        else:
+            # Обычные пользователи видят только свои заявки
+            orders = Order.objects.filter(creator=user).exclude(
+                status__in=[Order.OrderStatus.DELETED, Order.OrderStatus.DRAFT]
+            )
+        
+        # Фильтрация по дате формирования
         date_from = request.query_params.get('date_from', None)
         date_to = request.query_params.get('date_to', None)
         if date_from:
-            orders = orders.filter(creation_datetime__gte=date_from)
+            orders = orders.filter(formation_datetime__gte=date_from)
         if date_to:
-            orders = orders.filter(creation_datetime__lte=date_to)
+            orders = orders.filter(formation_datetime__lte=date_to)
+        
+        # Фильтрация по статусу
+        order_status = request.query_params.get('status', None)
+        if order_status:
+            orders = orders.filter(status=order_status)
         
         orders = orders.order_by('status', '-creation_datetime')
         serializer = OrderSerializer(orders, many=True)
@@ -140,15 +231,43 @@ class OrderList(APIView):
 
 
 class OrderDetail(APIView):
+    """
+    Детальная информация о заявке
+    GET: просмотр заявки
+    PUT: изменение полей заявки (только создатель в статусе DRAFT)
+    DELETE: логическое удаление заявки (только создатель)
+    """
+    authentication_classes = [SessionAuthentication, BasicAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    @swagger_auto_schema(
+        operation_description="Получить детальную информацию о заявке. Доступно создателю и модераторам.",
+        responses={200: FullOrderSerializer, 403: 'Forbidden', 404: 'Not Found'}
+    )
     def get(self, request, pk, format=None):
         order = get_object_or_404(Order, pk=pk)
+        # Проверка прав: либо создатель, либо менеджер/администратор
+        if order.creator != request.user and not (request.user.is_staff or request.user.is_superuser):
+            return Response({"error": "Нет доступа к этой заявке"}, 
+                          status=status.HTTP_403_FORBIDDEN)
         if order.status == Order.OrderStatus.DELETED:
             return Response({"error": "Заявка удалена"}, status=status.HTTP_404_NOT_FOUND)
         serializer = FullOrderSerializer(order)
         return Response(serializer.data)
     
+    @swagger_auto_schema(
+        request_body=OrderSerializer,
+        responses={200: OrderSerializer, 400: 'Bad Request', 403: 'Forbidden'}
+    )
     def put(self, request, pk, format=None):
         order = get_object_or_404(Order, pk=pk)
+        # Только создатель может редактировать свою заявку
+        if order.creator != request.user:
+            return Response({"error": "Можно редактировать только свои заявки"}, 
+                          status=status.HTTP_403_FORBIDDEN)
+        if order.status != Order.OrderStatus.DRAFT:
+            return Response({"error": "Можно редактировать только черновики"}, 
+                          status=status.HTTP_403_FORBIDDEN)
         serializer = OrderSerializer(order, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -157,14 +276,28 @@ class OrderDetail(APIView):
     
     def delete(self, request, pk, format=None):
         order = get_object_or_404(Order, pk=pk)
+        # Только создатель может удалять свою заявку
+        if order.creator != request.user:
+            return Response({"error": "Можно удалять только свои заявки"}, 
+                          status=status.HTTP_403_FORBIDDEN)
         order.status = Order.OrderStatus.DELETED
         order.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+@swagger_auto_schema(
+    method='put',
+    responses={200: FullOrderSerializer, 400: 'Bad Request', 403: 'Forbidden'}
+)
 @api_view(['PUT'])
+@permission_classes([IsAuthenticated])
 def form_order(request, pk):
+    """Формирование заявки (переход из черновика в сформированную)"""
     order = get_object_or_404(Order, pk=pk)
+    # Только создатель может формировать свою заявку
+    if order.creator != request.user:
+        return Response({"error": "Можно формировать только свои заявки"}, 
+                       status=status.HTTP_403_FORBIDDEN)
     if order.status != Order.OrderStatus.DRAFT:
         return Response({"error": "Можно формировать только черновик"}, 
                        status=status.HTTP_403_FORBIDDEN)
@@ -181,16 +314,21 @@ def form_order(request, pk):
     return Response(serializer.data)
 
 
+@swagger_auto_schema(
+    method='put',
+    responses={200: FullOrderSerializer, 403: 'Forbidden'}
+)
 @api_view(['PUT'])
+@permission_classes([IsManager])
 def complete_order(request, pk):
+    """Завершение заявки (только для менеджеров и администраторов)"""
     order = get_object_or_404(Order, pk=pk)
-    user = get_user()
     if order.status != Order.OrderStatus.FORMED:
         return Response({"error": "Можно завершать только сформированную заявку"}, 
                        status=status.HTTP_403_FORBIDDEN)
     order.status = Order.OrderStatus.COMPLETED
     order.completion_datetime = timezone.now()
-    order.moderator = user
+    order.moderator = request.user
     order.save()
     for drug_in_order in DrugInOrder.objects.filter(order=order):
         drug_in_order.calculate_infusion_speed()
@@ -199,24 +337,49 @@ def complete_order(request, pk):
     return Response(serializer.data)
 
 
+@swagger_auto_schema(
+    method='put',
+    responses={200: FullOrderSerializer, 403: 'Forbidden'}
+)
 @api_view(['PUT'])
+@permission_classes([IsManager])
 def reject_order(request, pk):
+    """Отклонение заявки (только для менеджеров и администраторов)"""
     order = get_object_or_404(Order, pk=pk)
-    user = get_user()
     if order.status != Order.OrderStatus.FORMED:
         return Response({"error": "Можно отклонять только сформированную заявку"}, 
                        status=status.HTTP_403_FORBIDDEN)
     order.status = Order.OrderStatus.REJECTED
     order.completion_datetime = timezone.now()
-    order.moderator = user
+    order.moderator = request.user
     order.save()
     serializer = FullOrderSerializer(order)
     return Response(serializer.data)
 
 
+@swagger_auto_schema(
+    method='delete',
+    responses={204: 'No Content', 403: 'Forbidden'}
+)
+@swagger_auto_schema(
+    method='put',
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'drug_rate': openapi.Schema(type=openapi.TYPE_NUMBER, description='Скорость введения препарата')
+        }
+    ),
+    responses={200: 'Success', 403: 'Forbidden'}
+)
 @api_view(['DELETE', 'PUT'])
+@permission_classes([IsAuthenticated])
 def drug_in_order_actions(request, order_pk, drug_pk):
+    """Удаление или изменение препарата в заявке (только создатель заявки)"""
     order = get_object_or_404(Order, pk=order_pk)
+    # Только создатель может изменять свою заявку
+    if order.creator != request.user:
+        return Response({"error": "Можно изменять только свои заявки"}, 
+                       status=status.HTTP_403_FORBIDDEN)
     if order.status != Order.OrderStatus.DRAFT:
         return Response({"error": "Можно изменять препараты только в черновике"}, 
                        status=status.HTTP_403_FORBIDDEN)
@@ -236,6 +399,14 @@ def drug_in_order_actions(request, order_pk, drug_pk):
 
 
 class UserRegistration(APIView):
+    """Регистрация нового пользователя (доступно всем)"""
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    
+    @swagger_auto_schema(
+        request_body=UserRegistrationSerializer,
+        responses={201: UserSerializer, 400: 'Bad Request'}
+    )
     def post(self, request, format=None):
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
@@ -249,12 +420,32 @@ class UserRegistration(APIView):
 
 
 class UserProfile(APIView):
+    """Просмотр и редактирование профиля пользователя"""
+    authentication_classes = [SessionAuthentication, BasicAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    @swagger_auto_schema(
+        operation_description="Получить информацию о профиле пользователя. Пользователь может просматривать только свой профиль.",
+        responses={200: UserSerializer, 403: 'Forbidden', 404: 'Not Found'}
+    )
     def get(self, request, pk, format=None):
+        # Пользователь может просматривать только свой профиль
+        if request.user.id != pk:
+            return Response({"error": "Доступ запрещен"}, 
+                          status=status.HTTP_403_FORBIDDEN)
         user = get_object_or_404(User, pk=pk)
         serializer = UserSerializer(user)
         return Response(serializer.data)
     
+    @swagger_auto_schema(
+        request_body=UserSerializer,
+        responses={200: UserSerializer, 400: 'Bad Request', 403: 'Forbidden'}
+    )
     def put(self, request, pk, format=None):
+        # Пользователь может редактировать только свой профиль
+        if request.user.id != pk:
+            return Response({"error": "Доступ запрещен"}, 
+                          status=status.HTTP_403_FORBIDDEN)
         user = get_object_or_404(User, pk=pk)
         serializer = UserSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
@@ -263,8 +454,23 @@ class UserProfile(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@swagger_auto_schema(
+    method='post',
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['username', 'password'],
+        properties={
+            'username': openapi.Schema(type=openapi.TYPE_STRING, description='Имя пользователя'),
+            'password': openapi.Schema(type=openapi.TYPE_STRING, description='Пароль')
+        }
+    ),
+    responses={200: UserSerializer, 400: 'Bad Request', 401: 'Unauthorized'}
+)
 @api_view(['POST'])
+@permission_classes([AllowAny])
+@authentication_classes([])
 def user_login(request):
+    """Аутентификация пользователя"""
     username = request.data.get('username')
     password = request.data.get('password')
     
@@ -272,16 +478,18 @@ def user_login(request):
         return Response({"error": "Укажите username и password"}, 
                        status=status.HTTP_400_BAD_REQUEST)
     
-    from django.contrib.auth import authenticate
-    user = authenticate(username=username, password=password)
+    user = authenticate(request, username=username, password=password)
     
     if user is not None:
+        login(request, user)
         return Response({
             "id": user.id,
             "username": user.username,
             "first_name": user.first_name,
             "last_name": user.last_name,
             "email": user.email,
+            "is_staff": user.is_staff,
+            "is_superuser": user.is_superuser,
             "message": "Успешная аутентификация"
         })
     else:
@@ -289,8 +497,15 @@ def user_login(request):
                        status=status.HTTP_401_UNAUTHORIZED)
 
 
+@swagger_auto_schema(
+    method='post',
+    responses={200: 'Success'}
+)
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def user_logout(request):
+    """Деавторизация пользователя"""
+    logout(request)
     return Response({"message": "Деавторизация выполнена"})
 
 
