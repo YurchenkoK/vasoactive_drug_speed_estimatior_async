@@ -1,0 +1,98 @@
+/* pages/DrugsPage.css */
+.breadcrumbs-wrapper {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px 75px 0 75px;
+}
+
+.search-section {
+  background-color: #F8F8F8;
+  margin-top: 15px;
+  padding: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.search-form {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.search-input {
+  padding: 16px 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  width: 350px;
+  height: 44px;
+  font-size: 14px;
+  background-color: #ffffff;
+}
+
+.search-input::placeholder {
+  color: #999;
+}
+
+.search-button {
+  padding: 12px 2px;
+  background-color: #2E29FF;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+  width: 83px;
+  height: 40px;
+}
+
+.search-button:hover {
+  background-color: #2519CC;
+}
+
+.search-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 35px 75px;
+}
+
+.drugs-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 18px;
+  margin-top: 0;
+}
+
+@media (max-width: 1400px) {
+  .drugs-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 1100px) {
+  .drugs-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .drugs-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .container {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .drugs-grid {
+    grid-template-columns: 1fr;
+  }
+}

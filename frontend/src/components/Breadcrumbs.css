@@ -1,0 +1,27 @@
+/* components/Breadcrumbs.css */
+.breadcrumbs {
+  padding: 0.75rem 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.breadcrumb-link {
+  color: #2E29FF;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.breadcrumb-link:hover {
+  color: #2519CC;
+  text-decoration: underline;
+}
+
+.breadcrumb-current {
+  color: #000;
+  font-weight: 500;
+}
+
+.separator {
+  margin: 0 0.5rem;
+  color: #999;
+}

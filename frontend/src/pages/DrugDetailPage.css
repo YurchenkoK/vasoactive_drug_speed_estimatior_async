@@ -1,0 +1,78 @@
+/* pages/DrugDetailPage.css */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 50vh;
+  text-align: center;
+}
+
+.drug-detail {
+  display: flex;
+  gap: 40px;
+  background: white;
+  padding: 40px;
+  border-radius: 10px;
+  margin-top: 20px;
+}
+
+.drug-detail-image img {
+  width: 300px;
+  height: 300px;
+  object-fit: contain;
+}
+
+.drug-detail-info {
+  flex: 1;
+}
+
+.drug-detail-title {
+  font-size: 36px;
+  font-weight: bold;
+  margin-bottom: 30px;
+  color: #000;
+}
+
+.drug-params p {
+  font-size: 18px;
+  margin: 15px 0;
+  color: #000;
+}
+
+.drug-params strong {
+  color: #000;
+}
+
+.drug-detail-form {
+  margin-top: 35px;
+}
+
+.drug-detail-form .details-button {
+  position: static;
+  display: inline-block;
+  padding: 12px 24px;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .drug-detail {
+    flex-direction: column;
+    padding: 20px;
+  }
+
+  .drug-detail-image img {
+    width: 100%;
+    height: auto;
+  }
+
+  .drug-detail-title {
+    font-size: 28px;
+  }
+
+  .drug-params p {
+    font-size: 16px;
+  }
+}
