@@ -6,13 +6,13 @@
   text-align: left;
   display: flex;
   flex-direction: column;
-  min-height: 280px;
+  min-height: 322px;
   position: relative;
   transition: box-shadow 0.2s;
 }
 
 .drug-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .drug-image {
@@ -43,7 +43,7 @@
 .details-button {
   background-color: #2E29FF;
   color: white;
-  padding: 10px 18px;
+  padding: 8px 18px;
   border-radius: 8px;
   text-decoration: none;
   display: inline-block;
@@ -54,6 +54,8 @@
   bottom: 16px;
   right: 16px;
   transition: background-color 0.2s;
+  border: none;
+  cursor: pointer;
 }
 
 .details-button:hover {

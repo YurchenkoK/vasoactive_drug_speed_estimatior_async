@@ -30,6 +30,61 @@
   background-color: #ffffff;
 }
 
+.search-input::-webkit-outer-spin-button,
+.search-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.search-input[type=number] {
+  -moz-appearance: textfield;
+}
+
+.filter-input {
+  width: 200px;
+}
+
+.filter-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.operator-select {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  height: 44px;
+  font-size: 14px;
+  background-color: #ffffff;
+  cursor: pointer;
+  width: 60px;
+  text-align: center;
+}
+
+/* Remove native dropdown arrow (cross-browser) for the operator selects */
+.operator-select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: none;
+}
+
+/* Remove number input spinners for the filter inputs (already partially present) */
+.search-input[type=number]::-webkit-outer-spin-button,
+.search-input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.search-input[type=number] {
+  -moz-appearance: textfield; /* Firefox */
+}
+
+/* For old IE/Edge */
+.operator-select::-ms-expand {
+  display: none;
+}
+
 .search-input::placeholder {
   color: #999;
 }
@@ -64,35 +119,9 @@
 
 .drugs-grid {
   display: grid;
+  max-width: 1250px;
+  margin: 0 auto;
   grid-template-columns: repeat(5, 1fr);
   gap: 18px;
   margin-top: 0;
-}
-
-@media (max-width: 1400px) {
-  .drugs-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-@media (max-width: 1100px) {
-  .drugs-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (max-width: 768px) {
-  .drugs-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .container {
-    padding: 20px;
-  }
-}
-
-@media (max-width: 480px) {
-  .drugs-grid {
-    grid-template-columns: 1fr;
-  }
 }

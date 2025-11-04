@@ -9,6 +9,8 @@
 }
 
 .drug-detail {
+  max-width: 1264px;
+  margin: 0 auto;
   display: flex;
   gap: 40px;
   background: white;
@@ -21,6 +23,8 @@
   width: 300px;
   height: 300px;
   object-fit: contain;
+  background-color: #ffffff;
+  display: block;
 }
 
 .drug-detail-info {

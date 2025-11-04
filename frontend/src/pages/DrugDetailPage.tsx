@@ -89,7 +89,7 @@ export default function DrugDetailPage() {
             <p><strong>Показания:</strong> {drug.description}</p>
             <div className="drug-detail-form">
               <Link to="/drugs" className="details-button">
-                ← Назад к каталогу
+                Назад к каталогу
               </Link>
             </div>
           </div>
