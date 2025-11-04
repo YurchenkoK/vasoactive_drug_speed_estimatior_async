@@ -16,7 +16,7 @@ from drf_yasg import openapi
 
 from stocks.serializers import (
     DrugSerializer, FullDrugSerializer, OrderSerializer, 
-    FullOrderSerializer, UserSerializer, UserRegistrationSerializer
+    FullOrderSerializer, DrugInOrderSerializer, UserSerializer, UserRegistrationSerializer
 )
 from stocks.models import Drug, Order, DrugInOrder
 from minio import Minio
