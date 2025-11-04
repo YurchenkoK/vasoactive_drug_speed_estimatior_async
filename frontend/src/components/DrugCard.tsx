@@ -7,18 +7,26 @@ interface DrugCardProps {
   drug: Drug;
 }
 
-const DEFAULT_IMAGE = "/placeholder-drug.png";
+const DEFAULT_IMAGE = "http://localhost:9000/images/placeholder-drug.png";
 
 export default function DrugCard({ drug }: DrugCardProps) {
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.target as HTMLImageElement;
+    // Проверяем, не является ли текущий src уже placeholder
+    if (img.src !== window.location.origin + DEFAULT_IMAGE) {
+      img.src = DEFAULT_IMAGE;
+      // Удаляем обработчик, чтобы избежать повторных вызовов
+      img.onerror = null;
+    }
+  };
+
   return (
     <div className="drug-card">
       <img 
         src={drug.image_url || DEFAULT_IMAGE}
         alt={drug.name}
         className="drug-image"
-        onError={(e) => {
-          (e.target as HTMLImageElement).src = DEFAULT_IMAGE;
-        }}
+        onError={handleImageError}
       />
       <h3 className="drug-name">{drug.name}</h3>
       <p className="drug-concentration">

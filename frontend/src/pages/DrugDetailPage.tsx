@@ -7,7 +7,7 @@ import { getDrug } from "../drugsApi";
 import { mockDrugs } from "../mock/DrugMock";
 import "./DrugDetailPage.css";
 
-const DEFAULT_IMAGE = "/placeholder-drug.png";
+const DEFAULT_IMAGE = "http://localhost:9000/images/placeholder-drug.png";
 
 export default function DrugDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -56,6 +56,16 @@ export default function DrugDetailPage() {
     );
   }
 
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.target as HTMLImageElement;
+    // Проверяем, не является ли текущий src уже placeholder
+    if (img.src !== window.location.origin + DEFAULT_IMAGE) {
+      img.src = DEFAULT_IMAGE;
+      // Удаляем обработчик, чтобы избежать повторных вызовов
+      img.onerror = null;
+    }
+  };
+
   return (
     <div className="container">
       <Breadcrumbs items={[
@@ -68,9 +78,7 @@ export default function DrugDetailPage() {
           <img 
             src={drug.image_url || DEFAULT_IMAGE}
             alt={drug.name}
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = DEFAULT_IMAGE;
-            }}
+            onError={handleImageError}
           />
         </div>
         <div className="drug-detail-info">
