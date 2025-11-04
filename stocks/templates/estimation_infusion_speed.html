@@ -5,6 +5,54 @@
     <title>Расчёт инфузии - Pfizer</title>
     {% load static %}
     <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+    <script>
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        function updateAmpouleVolume(input) {
+            const orderId = input.getAttribute('data-order-id');
+            const drugId = input.getAttribute('data-drug-id');
+            const newVolume = input.value;
+            
+            fetch(`/api/orders/${orderId}/drugs/${drugId}/`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    ampoule_volume: newVolume
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Объём ампулы обновлен:', data);
+                location.reload();
+            })
+            .catch(error => {
+                console.error('Ошибка:', error);
+                alert('Ошибка при обновлении объёма ампулы: ' + error.message);
+            });
+        }
+    </script>
 </head>
 <body>
     <div class="header">
@@ -112,7 +160,19 @@
                         </div>
                         <div class="spec-item">
                             <span class="spec-label">Объём амп.:</span>
-                            <span class="spec-value">{{ item.volume }}</span>
+                            {% if data.order_status == 'DRAFT' %}
+                            <div class="spec-value-edit">
+                                <input type="text" 
+                                       class="spec-input-inline" 
+                                       value="{{ item.ampoule_volume }}" 
+                                       data-drug-id="{{ item.drug_id }}"
+                                       data-order-id="{{ data.order_id }}"
+                                       onchange="updateAmpouleVolume(this)"
+                                       oninput="this.value = this.value.replace(',', '.')">
+                            </div>
+                            {% else %}
+                            <span class="spec-value">{{ item.ampoule_volume }} мл</span>
+                            {% endif %}
                         </div>
                         <div class="spec-item infusion-speed">
                             <span class="spec-label">Скорость введения:</span>

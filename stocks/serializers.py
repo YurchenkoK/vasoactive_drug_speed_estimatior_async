@@ -24,11 +24,12 @@ class FullDrugSerializer(serializers.ModelSerializer):
 
 
 class DrugInOrderSerializer(serializers.ModelSerializer):
-    drug = DrugSerializer(read_only=True)
+    drug_id = serializers.IntegerField(source='drug.id', read_only=True)
+    drug_name = serializers.CharField(source='drug.name', read_only=True)
     
     class Meta:
         model = DrugInOrder
-        fields = ["id", "drug", "infusion_speed", "drug_rate"]
+        fields = ["id", "drug_id", "drug_name", "ampoule_volume", "infusion_speed", "drug_rate"]
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -54,15 +55,26 @@ class OrderSerializer(serializers.ModelSerializer):
 class FullOrderSerializer(serializers.ModelSerializer):
     creator = serializers.SlugRelatedField(slug_field='username', read_only=True)
     moderator = serializers.SlugRelatedField(slug_field='username', read_only=True)
-    druginorder_set = DrugInOrderSerializer(many=True, read_only=True)
+    drugs = serializers.SerializerMethodField()
     
     class Meta:
         model = Order
         fields = ["id", "status", "creation_datetime", "formation_datetime", 
                   "completion_datetime", "creator", "moderator", "ampoules_count", 
-                  "solvent_volume", "patient_weight", "druginorder_set"]
+                  "solvent_volume", "patient_weight", "drugs"]
         read_only_fields = ["creation_datetime", "formation_datetime", "completion_datetime", 
                            "creator", "moderator"]
+    
+    def get_drugs(self, obj):
+        drug_in_orders = DrugInOrder.objects.filter(order=obj)
+        return [{
+            "id": dio.id,
+            "drug_id": dio.drug.id,
+            "drug_name": dio.drug.name,
+            "ampoule_volume": dio.ampoule_volume,
+            "infusion_speed": dio.infusion_speed,
+            "drug_rate": dio.drug_rate
+        } for dio in drug_in_orders]
 
 
 class UserSerializer(serializers.ModelSerializer):

@@ -49,6 +49,7 @@ class Order(models.Model):
 class DrugInOrder(models.Model):
     order = models.ForeignKey(Order, on_delete=models.DO_NOTHING, verbose_name="Заявка")
     drug = models.ForeignKey(Drug, on_delete=models.DO_NOTHING, verbose_name="Препарат")
+    ampoule_volume = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Объём ампулы (мл)")
     infusion_speed = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Скорость инфузии (мл/мин)")
     drug_rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Скорость введения (мг/кг/час)")
     
@@ -61,9 +62,15 @@ class DrugInOrder(models.Model):
     def __str__(self):
         return f"{self.order.id}-{self.drug.name}"
     
+    def save(self, *args, **kwargs):
+        if not self.ampoule_volume:
+            self.ampoule_volume = self.drug.volume
+        super().save(*args, **kwargs)
+    
     def calculate_infusion_speed(self):
         if self.order and self.order.solvent_volume and self.order.patient_weight:
-            total_drug_mg = self.drug.concentration * self.order.ampoules_count * self.drug.volume
+            volume = self.ampoule_volume if self.ampoule_volume else self.drug.volume
+            total_drug_mg = self.drug.concentration * self.order.ampoules_count * volume
             infusion_speed_ml_min = self.order.solvent_volume / 60
             infusion_speed_ml_hour = infusion_speed_ml_min * 60
             drug_mg_per_hour = (infusion_speed_ml_hour / self.order.solvent_volume) * total_drug_mg

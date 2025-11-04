@@ -1,556 +1,275 @@
-type: collection.insomnia.rest/5.0
-name: Scratch Pad
-meta:
-  id: wrk_scratchpad
-  created: 1760974596739
-  modified: 1760974596739
-  description: ""
-collection:
-  - name: 2. ЗАЯВКИ (8 методов)
-    meta:
-      id: fld_4005428e44e242f1812d4e318d9fb156
-      created: 1697817600000
-      modified: 1697817600000
-      sortKey: -900
-      description: Домен заявки
-    children:
-      - url: http://localhost:8000/api/orders/24/reject/
-        name: 2.7. PUT отклонить модератором
-        meta:
-          id: req_028897742d77474d8b70214c45a472e8
-          created: 1697817600000
-          modified: 1760986146460
-          isPrivate: false
-          description: PUT отклонить модератором. Проставляется модератор, дата. Статус
-            REJECTED.
-          sortKey: -1697817587000
-        method: PUT
-        settings:
-          renderRequestBody: true
-          encodeUrl: true
-          followRedirects: global
-          cookies:
-            send: true
-            store: true
-          rebuildPath: true
-      - url: http://localhost:8000/api/orders/21/
-        name: 2.8. DELETE удаление
-        meta:
-          id: req_0843bcb4fb554ec494eb7e31bb3441da
-          created: 1697817600000
-          modified: 1760986712810
-          isPrivate: false
-          description: DELETE удаление заявки (логическое, статус DELETED)
-          sortKey: -1697817586000
-        method: DELETE
-        settings:
-          renderRequestBody: true
-          encodeUrl: true
-          followRedirects: global
-          cookies:
-            send: true
-            store: true
-          rebuildPath: true
-      - url: http://localhost:8000/api/orders/cart/
-        name: 2.1. GET иконка корзины
-        meta:
-          id: req_181fea04162e4e23bb34f056d61eab17
-          created: 1697817600000
-          modified: 1697817600000
-          isPrivate: false
-          description: GET иконки корзины (без параметров, ID вычисляется автоматически)
-          sortKey: -1697817593000
-        method: GET
-        settings:
-          renderRequestBody: true
-          encodeUrl: true
-          followRedirects: global
-          cookies:
-            send: true
-            store: true
-          rebuildPath: true
-      - url: http://localhost:8000/api/orders/23/complete/
-        name: 2.6. PUT завершить модератором
-        meta:
-          id: req_3ffb33dc06254637988ed072c7c29843
-          created: 1697817600000
-          modified: 1760982084840
-          isPrivate: false
-          description: PUT завершить модератором. Проставляется модератор, дата. Расчет
-            скорости инфузии.
-          sortKey: -1697817588000
-        method: PUT
-        settings:
-          renderRequestBody: true
-          encodeUrl: true
-          followRedirects: global
-          cookies:
-            send: true
-            store: true
-          rebuildPath: true
-      - url: http://localhost:8000/api/orders/24/
-        name: 2.4. PUT изменение полей заявки
-        meta:
-          id: req_5156532efdfb46fba211e7c0af92098d
-          created: 1697817600000
-          modified: 1760984671852
-          isPrivate: false
-          description: PUT изменение полей заявки по теме (только для DRAFT)
-          sortKey: -1697817590000
-        method: PUT
-        body:
-          mimeType: application/json
-          text: |-
-            {
-              "ampoules_count": 5,
-              "solvent_volume": "100.0",
-              "patient_weight": "70.0"
-            }
-        headers:
-          - name: Content-Type
-            value: application/json
-        settings:
-          renderRequestBody: true
-          encodeUrl: true
-          followRedirects: global
-          cookies:
-            send: true
-            store: true
-          rebuildPath: true
-      - url: http://localhost:8000/api/orders/24/form/
-        name: 2.5. PUT сформировать создателем
-        meta:
-          id: req_740b9fa3364a492aa678bc3198eee80e
-          created: 1697817600000
-          modified: 1760985468450
-          isPrivate: false
-          description: PUT сформировать создателем. Проставляется дата формирования.
-            Проверка обязательных полей.
-          sortKey: -1697817589000
-        method: PUT
-        settings:
-          renderRequestBody: true
-          encodeUrl: true
-          followRedirects: global
-          cookies:
-            send: true
-            store: true
-          rebuildPath: true
-      - url: http://localhost:8000/api/orders/
-        name: 2.2. GET список заявок с фильтрацией
-        meta:
-          id: req_c43deba71c954f8680af40bb0e14cdd1
-          created: 1697817600000
-          modified: 1760981135849
-          isPrivate: false
-          description: GET список заявок (кроме DRAFT и DELETED) с опциональной
-            фильтрацией по дате создания. Модератор и создатель через логины.
-          sortKey: -1697817592000
-        method: GET
-        parameters:
-          - name: date_from
-            value: 2025-01-01
-            description: Начало диапазона даты создания (опционально)
-            id: pair_date_from
-            disabled: false
-          - name: date_to
-            value: 2025-12-31
-            description: Конец диапазона даты создания (опционально)
-            id: pair_date_to
-            disabled: false
-        settings:
-          renderRequestBody: true
-          encodeUrl: true
-          followRedirects: global
-          cookies:
-            send: true
-            store: true
-          rebuildPath: true
-      - url: http://localhost:8000/api/orders/1/
-        name: 2.3. GET одна запись (заявка + услуги)
-        meta:
-          id: req_fc6d4680b1ff4cf0b69ef915e8609808
-          created: 1697817600000
-          modified: 1760981210688
-          isPrivate: false
-          description: GET одна заявка с полями заявки + список ее услуг с картинками
-          sortKey: -1697817591000
-        method: GET
-        settings:
-          renderRequestBody: true
-          encodeUrl: true
-          followRedirects: global
-          cookies:
-            send: true
-            store: true
-          rebuildPath: true
-  - name: 4. ПОЛЬЗОВАТЕЛИ (5 методов)
-    meta:
-      id: fld_563018069421464fb48df5ec99f9196c
-      created: 1697817600000
-      modified: 1697817600000
-      sortKey: -700
-      description: Домен пользователь
-    children:
-      - url: http://localhost:8000/api/login/
-        name: 4.4. POST аутентификация
-        meta:
-          id: req_2893533723f4443b885f134e0d99ee77
-          created: 1697817600000
-          modified: 1760988422821
-          isPrivate: false
-          description: POST аутентификация пользователя (логин)
-          sortKey: -1697817580000
-        method: POST
-        body:
-          mimeType: application/json
-          text: |-
-            {
-                "username": "admin",
-                "password": "admi1n"
-            }
-        headers:
-          - name: Content-Type
-            value: application/json
-        settings:
-          renderRequestBody: true
-          encodeUrl: true
-          followRedirects: global
-          cookies:
-            send: true
-            store: true
-          rebuildPath: true
-      - url: http://localhost:8000/api/register/
-        name: 4.1. POST регистрация
-        meta:
-          id: req_5084979bb5a14e498e3c99bac69663ea
-          created: 1697817600000
-          modified: 1760987351904
-          isPrivate: false
-          description: POST регистрация нового пользователя. Пароль хэшируется
-            автоматически.
-          sortKey: -1697817583000
-        method: POST
-        body:
-          mimeType: application/json
-          text: |-
-            {
-              "username": "doctor2",
-              "password": "Examplepass",
-              "first_name": "Tyazhe",
-              "last_name": "lo",
-              "email": "pomogite@kto.to"
-            }
-        headers:
-          - name: Content-Type
-            value: application/json
-        settings:
-          renderRequestBody: true
-          encodeUrl: true
-          followRedirects: global
-          cookies:
-            send: true
-            store: true
-          rebuildPath: true
-      - url: http://localhost:8000/api/profile/5/
-        name: 4.3. PUT изменение профиля
-        meta:
-          id: req_8264ad1b0307489daa3666fcc5aeacff
-          created: 1697817600000
-          modified: 1760988071716
-          isPrivate: false
-          description: PUT изменение данных профиля пользователя (личный кабинет)
-          sortKey: -1697817581000
-        method: PUT
-        body:
-          mimeType: application/json
-          text: |-
-            {
-                "first_name": "ABC"
-            }
-        headers:
-          - name: Content-Type
-            value: application/json
-        settings:
-          renderRequestBody: true
-          encodeUrl: true
-          followRedirects: global
-          cookies:
-            send: true
-            store: true
-          rebuildPath: true
-      - url: http://localhost:8000/api/logout/
-        name: 4.5. POST деавторизация
-        meta:
-          id: req_90db103e0d8b466caaa61154b15dd507
-          created: 1697817600000
-          modified: 1760988453818
-          isPrivate: false
-          description: POST деавторизация пользователя (выход из системы)
-          sortKey: -1697817579000
-        method: POST
-        settings:
-          renderRequestBody: true
-          encodeUrl: true
-          followRedirects: global
-          cookies:
-            send: true
-            store: true
-          rebuildPath: true
-      - url: http://localhost:8000/api/profile/5/
-        name: 4.2. GET профиль пользователя
-        meta:
-          id: req_ee136f9b990040b2b24eb949bd631f0b
-          created: 1697817600000
-          modified: 1760987940087
-          isPrivate: false
-          description: GET полей пользователя после аутентификации (личный кабинет)
-          sortKey: -1697817582000
-        method: GET
-        settings:
-          renderRequestBody: true
-          encodeUrl: true
-          followRedirects: global
-          cookies:
-            send: true
-            store: true
-          rebuildPath: true
-  - name: 1. УСЛУГИ (7 методов)
-    meta:
-      id: fld_83ab07feb45a45608a7b63552b9605a4
-      created: 1697817600000
-      modified: 1697817600000
-      sortKey: -1000
-      description: Домен услуги - препараты
-    children:
-      - url: http://localhost:8000/api/drugs/4/
-        name: 1.4. PUT изменение
-        meta:
-          id: req_0f0c02ae1c1e49c2add7bbd394df3034
-          created: 1697817600000
-          modified: 1697817600000
-          isPrivate: false
-          description: PUT изменение препарата
-          sortKey: -1697817597000
-        method: PUT
-        body:
-          mimeType: application/json
-          text: |-
-            {
-              "name": "Добутамин (обновлен)",
-              "description": "Обновленное описание препарата",
-              "concentration": "12.5",
-              "volume": "5.0"
-            }
-        headers:
-          - name: Content-Type
-            value: application/json
-        settings:
-          renderRequestBody: true
-          encodeUrl: true
-          followRedirects: global
-          cookies:
-            send: true
-            store: true
-          rebuildPath: true
-      - url: http://localhost:8000/api/drugs/1/
-        name: 1.2. GET одна запись
-        meta:
-          id: req_1615f0f1b0ae43a78454d5a954c6fbdf
-          created: 1697817600000
-          modified: 1697817600000
-          isPrivate: false
-          description: GET одна запись препарата по ID
-          sortKey: -1697817599000
-        method: GET
-        settings:
-          renderRequestBody: true
-          encodeUrl: true
-          followRedirects: global
-          cookies:
-            send: true
-            store: true
-          rebuildPath: true
-      - url: http://localhost:8000/api/drugs/1/add-to-order/
-        name: 1.6. POST добавление в заявку-черновик
-        meta:
-          id: req_1922a8ef1ac349619e9c0588a0d04cf9
-          created: 1697817600000
-          modified: 1697817600000
-          isPrivate: false
-          description: POST добавление в заявку-черновик. Заявка создается автоматически.
-          sortKey: -1697817595000
-        method: POST
-        settings:
-          renderRequestBody: true
-          encodeUrl: true
-          followRedirects: global
-          cookies:
-            send: true
-            store: true
-          rebuildPath: true
-      - url: http://localhost:8000/api/drugs/?name=Адреналин
-        name: 1.1. GET список с фильтрацией
-        meta:
-          id: req_3b812f1edce94d8594254efba6e6c551
-          created: 1697817600000
-          modified: 1697817600000
-          isPrivate: false
-          description: GET список препаратов с фильтрацией по имени
-          sortKey: -1697817600000
-        method: GET
-        settings:
-          renderRequestBody: true
-          encodeUrl: true
-          followRedirects: global
-          cookies:
-            send: true
-            store: true
-          rebuildPath: true
-      - url: http://localhost:8000/api/drugs/1/add-image/
-        name: 1.7. POST добавление изображения
-        meta:
-          id: req_b425c674e8e247148e49dca513f9abc1
-          created: 1697817600000
-          modified: 1697817600000
-          isPrivate: false
-          description: POST добавление изображения. MinIO только здесь и в DELETE!
-          sortKey: -1697817594000
-        method: POST
-        body:
-          mimeType: multipart/form-data
-          params:
-            - name: pic
-              value: ""
-              description: ""
-              id: pair_pic
-              type: file
-              fileName: ""
-        headers:
-          - name: Content-Type
-            value: multipart/form-data
-        settings:
-          renderRequestBody: true
-          encodeUrl: true
-          followRedirects: global
-          cookies:
-            send: true
-            store: true
-          rebuildPath: true
-      - url: http://localhost:8000/api/drugs/9/
-        name: 1.5. DELETE удаление (с изображением)
-        meta:
-          id: req_e380b533610a48d3bd8d5b26bb568a58
-          created: 1697817600000
-          modified: 1760984480890
-          isPrivate: false
-          description: DELETE удаление препарата. Удаление изображения встроено в метод.
-          sortKey: -1697817596000
-        method: DELETE
-        settings:
-          renderRequestBody: true
-          encodeUrl: true
-          followRedirects: global
-          cookies:
-            send: true
-            store: true
-          rebuildPath: true
-      - url: http://localhost:8000/api/drugs/
-        name: 1.3. POST добавление (без изображения)
-        meta:
-          id: req_f4a97d200b2645a38fd37db84c6a8da6
-          created: 1697817600000
-          modified: 1697817600000
-          isPrivate: false
-          description: POST добавление препарата БЕЗ изображения
-          sortKey: -1697817598000
-        method: POST
-        body:
-          mimeType: application/json
-          text: >-
-            {
-              "name": "Добутамин",
-              "description": "Инотропный препарат для сердечной недостаточности",
-              "concentration": "12.5",
-              "volume": "5.0",
-              "is_active": true
-            }
-        headers:
-          - name: Content-Type
-            value: application/json
-        settings:
-          renderRequestBody: true
-          encodeUrl: true
-          followRedirects: global
-          cookies:
-            send: true
-            store: true
-          rebuildPath: true
-  - name: 3. М-М (2 метода)
-    meta:
-      id: fld_9d53db72051741258b3021ac9107e06a
-      created: 1697817600000
-      modified: 1697817600000
-      sortKey: -800
-      description: Домен многие-ко-многим
-    children:
-      - url: http://localhost:8000/api/orders/27/drugs/1/
-        name: 3.1. DELETE удаление из заявки (без PK)
-        meta:
-          id: req_0e2b70dfde714e5b8c0fa932467fd6df
-          created: 1697817600000
-          modified: 1760986937917
-          isPrivate: false
-          description: DELETE удаление препарата из заявки БЕЗ PK м-м (используется
-            order_id и drug_id)
-          sortKey: -1697817585000
-        method: DELETE
-        settings:
-          renderRequestBody: true
-          encodeUrl: true
-          followRedirects: global
-          cookies:
-            send: true
-            store: true
-          rebuildPath: true
-      - url: http://localhost:8000/api/orders/27/drugs/5/
-        name: 3.2. PUT изменение в м-м (без PK)
-        meta:
-          id: req_7d3a4f02c9e1411eb2e5b49beb52d55d
-          created: 1697817600000
-          modified: 1760987207169
-          isPrivate: false
-          description: PUT изменение drug_rate в м-м БЕЗ PK (используется order_id и
-            drug_id)
-          sortKey: -1697817584000
-        method: PUT
-        body:
-          mimeType: application/json
-          text: |-
-            {
-              "drug_rate": "5.0"
-            }
-        headers:
-          - name: Content-Type
-            value: application/json
-        settings:
-          renderRequestBody: true
-          encodeUrl: true
-          followRedirects: global
-          cookies:
-            send: true
-            store: true
-          rebuildPath: true
-cookieJar:
-  name: Default Jar
-  meta:
-    id: jar_99d30891da4bdcebc63947a8fc17f076de878684
-    created: 1760974609468
-    modified: 1760974609468
-environments:
-  name: Base Environment
-  meta:
-    id: env_99d30891da4bdcebc63947a8fc17f076de878684
-    created: 1760974609463
-    modified: 1760974609463
-    isPrivate: false
+_type: export
+__export_format: 4
+__export_date: 2025-11-03T20:00:00.000Z
+__export_source: insomnia.desktop.app:v2023.5.8
+resources:
+  - _id: wrk_vasoactive_drugs
+    _type: workspace
+    name: Vasoactive Drugs API
+    description: API для управления вазоактивными препаратами и заявками
+    
+  - _id: env_base
+    parentId: wrk_vasoactive_drugs
+    _type: environment
+    name: Base Environment
+    data:
+      base_url: http://localhost:8000
+      
+  - _id: fld_drugs
+    parentId: wrk_vasoactive_drugs
+    _type: request_group
+    name: Домен услуги (Препараты)
+    
+  - _id: fld_orders
+    parentId: wrk_vasoactive_drugs
+    _type: request_group
+    name: Домен заявки
+    
+  - _id: fld_mm
+    parentId: wrk_vasoactive_drugs
+    _type: request_group
+    name: Домен м-м
+    
+  - _id: fld_users
+    parentId: wrk_vasoactive_drugs
+    _type: request_group
+    name: Домен пользователь
+    
+  - _id: req_drug_add_image
+    parentId: fld_drugs
+    _type: request
+    name: POST добавление изображения
+    method: POST
+    url: "http://localhost:8000/api/drugs/1/add-image/"
+    body:
+      mimeType: multipart/form-data
+    
+  - _id: req_drug_add_to_order
+    parentId: fld_drugs
+    _type: request
+    name: POST добавления в заявку-черновик
+    method: POST
+    url: "http://localhost:8000/api/drugs/1/add-to-order/"
+    
+  - _id: req_drug_delete
+    parentId: fld_drugs
+    _type: request
+    name: DELETE удаление
+    method: DELETE
+    url: "http://localhost:8000/api/drugs/1/"
+        
+  - _id: req_drug_update
+    parentId: fld_drugs
+    _type: request
+    name: PUT изменение
+    method: PUT
+    url: "http://localhost:8000/api/drugs/1/"
+    headers:
+      - name: Content-Type
+        value: application/json
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "name": "Нитроглицерин обновлено",
+          "concentration": "2.00"
+        }
+    
+  - _id: req_drug_create
+    parentId: fld_drugs
+    _type: request
+    name: POST добавление (без изображения)
+    method: POST
+    url: "http://localhost:8000/api/drugs/"
+    headers:
+      - name: Content-Type
+        value: application/json
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "name": "Нитроглицерин",
+          "description": "Для лечения стенокардии",
+          "concentration": "1.00",
+          "volume": "1.00",
+          "is_active": true
+        }
+    
+  - _id: req_drug_detail
+    parentId: fld_drugs
+    _type: request
+    name: GET одна запись
+    method: GET
+    url: "http://localhost:8000/api/drugs/1/"
+    
+  - _id: req_drugs_list
+    parentId: fld_drugs
+    _type: request
+    name: GET список с фильтрацией
+    method: GET
+    url: "http://localhost:8000/api/drugs/?name=Нитроглицерин"
+    
+  - _id: req_order_delete
+    parentId: fld_orders
+    _type: request
+    name: DELETE удаление
+    method: DELETE
+    url: "http://localhost:8000/api/orders/1/"
+    
+  - _id: req_order_reject
+    parentId: fld_orders
+    _type: request
+    name: PUT отклонить модератором
+    method: PUT
+    url: "http://localhost:8000/api/orders/1/reject/"
+    
+  - _id: req_order_complete
+    parentId: fld_orders
+    _type: request
+    name: PUT завершить модератором
+    method: PUT
+    url: "http://localhost:8000/api/orders/1/complete/"
+    
+  - _id: req_order_form
+    parentId: fld_orders
+    _type: request
+    name: PUT сформировать создателем
+    method: PUT
+    url: "http://localhost:8000/api/orders/1/form/"
+    
+  - _id: req_order_update
+    parentId: fld_orders
+    _type: request
+    name: PUT изменения полей заявки по теме
+    method: PUT
+    url: "http://localhost:8000/api/orders/1/"
+    headers:
+      - name: Content-Type
+        value: application/json
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "ampoules_count": 5,
+          "solvent_volume": "100.00",
+          "patient_weight": "70.00"
+        }
+    
+  - _id: req_order_detail
+    parentId: fld_orders
+    _type: request
+    name: GET одна запись
+    method: GET
+    url: "http://localhost:8000/api/orders/1/"
+    
+  - _id: req_orders_list
+    parentId: fld_orders
+    _type: request
+    name: GET список с фильтрацией
+    method: GET
+    url: "http://localhost:8000/api/orders/?status=FORMED&formation_date_from=2025-01-01&formation_date_to=2025-12-31"
+    
+  - _id: req_cart_icon
+    parentId: fld_orders
+    _type: request
+    name: GET иконки корзины
+    method: GET
+    url: "http://localhost:8000/api/orders/cart/"
+    
+  - _id: req_drug_in_order_update
+    parentId: fld_mm
+    _type: request
+    name: PUT изменение объёма ампулы в м-м
+    method: PUT
+    url: "http://localhost:8000/api/orders/1/drugs/1/"
+    headers:
+      - name: Content-Type
+        value: application/json
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "ampoule_volume": "2.50",
+          "drug_rate": "5.0"
+        }
+    
+  - _id: req_drug_in_order_delete
+    parentId: fld_mm
+    _type: request
+    name: DELETE удаление из заявки
+    method: DELETE
+    url: "http://localhost:8000/api/orders/1/drugs/1/"
+        
+  - _id: req_user_logout
+    parentId: fld_users
+    _type: request
+    name: POST деавторизация
+    method: POST
+    url: "http://localhost:8000/api/users/logout/"
+    
+  - _id: req_user_login
+    parentId: fld_users
+    _type: request
+    name: POST аутентификация
+    method: POST
+    url: "http://localhost:8000/api/users/login/"
+    headers:
+      - name: Content-Type
+        value: application/json
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "username": "admin",
+          "password": "admin"
+        }
+    
+  - _id: req_user_profile_put
+    parentId: fld_users
+    _type: request
+    name: PUT пользователя (личный кабинет)
+    method: PUT
+    url: "http://localhost:8000/api/users/profile/1/"
+    headers:
+      - name: Content-Type
+        value: application/json
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "first_name": "Updated",
+          "last_name": "Name"
+        }
+    
+  - _id: req_user_profile_get
+    parentId: fld_users
+    _type: request
+    name: GET полей пользователя после аутентификации
+    method: GET
+    url: "http://localhost:8000/api/users/profile/1/"
+        
+  - _id: req_user_register
+    parentId: fld_users
+    _type: request
+    name: POST регистрация
+    method: POST
+    url: "http://localhost:8000/api/users/register/"
+    headers:
+      - name: Content-Type
+        value: application/json
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "username": "newuser",
+          "password": "password123",
+          "email": "newuser@example.com",
+          "first_name": "New",
+          "last_name": "User"
+        }
+
+
+
+
+
+
