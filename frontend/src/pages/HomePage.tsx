@@ -8,7 +8,7 @@ export default function HomePage() {
       <div className="home-container">
         <h1 className="home-title">Вазоактивные препараты Pfizer</h1>
         <p className="home-description">
-          Добро пожаловать в каталог вазоактивных препаратов
+          Сервис для расчёта скорости инфузии вазоактивных препаратов
         </p>
         <Link to="/drugs" className="home-button">
           Перейти к каталогу

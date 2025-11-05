@@ -20,7 +20,7 @@ export default function DrugsPage() {
     loadDrugs();
   }, []);
 
-  const loadDrugs = async () => {
+  const 548\loadDrugs = async () => {
     setLoading(true);
     try {
       const data = await listDrugs();
