@@ -1,4 +1,3 @@
-/* pages/DrugDetailPage.tsx */
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import Breadcrumbs from "../components/Breadcrumbs";
@@ -12,13 +11,11 @@ const DEFAULT_IMAGE = "http://localhost:9000/images/placeholder-drug.png";
 export default function DrugDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [drug, setDrug] = useState<Drug | null>(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!id) return;
 
     const loadDrug = async () => {
-      setLoading(true);
       try {
         const data = await getDrug(parseInt(id));
         if (data) {
@@ -31,19 +28,10 @@ export default function DrugDetailPage() {
         const mockDrug = mockDrugs.find(d => d.id === parseInt(id));
         setDrug(mockDrug || null);
       }
-      setLoading(false);
     };
 
     loadDrug();
   }, [id]);
-
-  if (loading) {
-    return (
-      <div className="loading-container">
-        <p>Загрузка...</p>
-      </div>
-    );
-  }
 
   if (!drug) {
     return (
