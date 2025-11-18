@@ -1,4 +1,3 @@
-/* drugsApi.ts */
 import type { Drug } from "./DrugTypes";
 
 export async function listDrugs(params?: { 

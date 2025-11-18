@@ -1,4 +1,3 @@
-/* pages/DrugsPage.css */
 .breadcrumbs-wrapper {
   max-width: 1400px;
   margin: 0 auto;
@@ -38,6 +37,7 @@
 
 .search-input[type=number] {
   -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 .filter-input {
@@ -62,7 +62,6 @@
   text-align: center;
 }
 
-/* Remove native dropdown arrow (cross-browser) for the operator selects */
 .operator-select {
   -webkit-appearance: none;
   -moz-appearance: none;
@@ -70,14 +69,14 @@
   background-image: none;
 }
 
-/* Remove number input spinners for the filter inputs (already partially present) */
 .search-input[type=number]::-webkit-outer-spin-button,
 .search-input[type=number]::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
 .search-input[type=number] {
-  -moz-appearance: textfield; /* Firefox */
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 /* For old IE/Edge */

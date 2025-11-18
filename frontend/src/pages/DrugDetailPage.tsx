@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import Breadcrumbs from "../components/Breadcrumbs";
 import type { Drug } from "../DrugTypes";
 import { getDrug } from "../drugsApi";
@@ -34,22 +34,13 @@ export default function DrugDetailPage() {
   }, [id]);
 
   if (!drug) {
-    return (
-      <div className="loading-container">
-        <h2>Препарат не найден</h2>
-        <Link to="/drugs" className="details-button">
-          Вернуться к каталогу
-        </Link>
-      </div>
-    );
+    return <div className="loading-container"></div>;
   }
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.target as HTMLImageElement;
-    // Проверяем, не является ли текущий src уже placeholder
     if (img.src !== window.location.origin + DEFAULT_IMAGE) {
       img.src = DEFAULT_IMAGE;
-      // Удаляем обработчик, чтобы избежать повторных вызовов
       img.onerror = null;
     }
   };
@@ -75,11 +66,6 @@ export default function DrugDetailPage() {
             <p><strong>Концентрация ампулы:</strong> {drug.concentration} мг/мл</p>
             <p><strong>Объём ампулы:</strong> {drug.volume} мл</p>
             <p><strong>Показания:</strong> {drug.description}</p>
-            <div className="drug-detail-form">
-              <Link to="/drugs" className="details-button">
-                Назад к каталогу
-              </Link>
-            </div>
           </div>
         </div>
       </div>

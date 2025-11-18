@@ -1,6 +1,13 @@
-/* pages/HomePage.tsx */
 import { Link } from "react-router-dom";
+import Carousel from "../components/Carousel";
 import "./HomePage.css";
+
+const drugImages = [
+  "/EpiVial.jpg",
+  "/Milrinonepackvial.png",
+  "/nitroglic.jpg",
+  "/phenylephirine.jpg",
+];
 
 export default function HomePage() {
   return (
@@ -10,6 +17,11 @@ export default function HomePage() {
         <p className="home-description">
           Сервис для расчёта скорости инфузии вазоактивных препаратов
         </p>
+        
+        <div className="home-carousel-section">
+          <Carousel images={drugImages} autoPlayInterval={12000} />
+        </div>
+
         <Link to="/drugs" className="home-button">
           Перейти к каталогу
         </Link>

@@ -1,4 +1,3 @@
-/* pages/DrugsPage.tsx */
 import { useEffect, useState } from "react";
 import Breadcrumbs from "../components/Breadcrumbs";
 import DrugCard from "../components/DrugCard";

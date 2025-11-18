@@ -1,4 +1,3 @@
-// src/mock/DrugMock.ts
 import type { Drug } from "../DrugTypes";
 
 export const mockDrugs: Drug[] = [

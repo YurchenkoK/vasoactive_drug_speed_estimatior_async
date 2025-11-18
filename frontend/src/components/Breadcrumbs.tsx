@@ -1,4 +1,3 @@
-/* components/Breadcrumbs.tsx */
 import { Link } from "react-router-dom";
 import "./Breadcrumbs.css";
 

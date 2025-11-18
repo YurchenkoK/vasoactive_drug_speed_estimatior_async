@@ -1,4 +1,3 @@
-/* components/AppNavbar.tsx */
 import { Link } from "react-router-dom";
 import "./AppNavbar.css";
 

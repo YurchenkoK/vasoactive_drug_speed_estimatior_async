@@ -1,4 +1,3 @@
-/* components/DrugCard.tsx */
 import { Link } from "react-router-dom";
 import type { Drug } from "../DrugTypes";
 import "./DrugCard.css";
@@ -12,10 +11,8 @@ const DEFAULT_IMAGE = "http://localhost:9000/images/placeholder-drug.png";
 export default function DrugCard({ drug }: DrugCardProps) {
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.target as HTMLImageElement;
-    // Проверяем, не является ли текущий src уже placeholder
     if (img.src !== window.location.origin + DEFAULT_IMAGE) {
       img.src = DEFAULT_IMAGE;
-      // Удаляем обработчик, чтобы избежать повторных вызовов
       img.onerror = null;
     }
   };

@@ -1,26 +1,40 @@
-/* pages/HomePage.css */
 .home-wrapper {
   min-height: calc(100vh - 200px);
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 40px 20px;
 }
 
 .home-container {
   text-align: center;
   padding: 40px;
+  max-width: 1200px;
+  width: 100%;
 }
 
 .home-title {
   color: #0033a0;
   font-size: 42px;
   font-weight: bold;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
+  margin-top: -40px;
 }
 
 .home-description {
   font-size: 18px;
   color: #666;
+  margin-bottom: 50px;
+}
+
+.home-carousel-section {
+  margin: 30px 0;
+}
+
+.carousel-section-title {
+  font-size: 28px;
+  font-weight: bold;
+  color: #0033a0;
   margin-bottom: 30px;
 }
 
@@ -34,6 +48,7 @@
   font-weight: 500;
   transition: background-color 0.2s;
   text-decoration: none;
+  margin-top: 15px;
 }
 
 .home-button:hover {
