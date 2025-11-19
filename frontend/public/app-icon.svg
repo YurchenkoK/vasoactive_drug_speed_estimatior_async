@@ -1,0 +1,46 @@
+<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Градиентный фон -->
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0033a0;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2E29FF;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="bottleGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.9" />
+      <stop offset="100%" style="stop-color:#e8f0ff;stop-opacity:0.9" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Фон -->
+  <rect width="512" height="512" fill="url(#bgGrad)" rx="80"/>
+  
+  <!-- Флакон/пробирка -->
+  <g transform="translate(256, 256)">
+    <!-- Горлышко флакона -->
+    <rect x="-25" y="-180" width="50" height="40" fill="#ffffff" opacity="0.95" rx="5"/>
+    
+    <!-- Тело флакона -->
+    <rect x="-60" y="-140" width="120" height="240" fill="url(#bottleGrad)" rx="15"/>
+    
+    <!-- Этикетка -->
+    <rect x="-50" y="-60" width="100" height="80" fill="#0033a0" opacity="0.3" rx="8"/>
+    
+    <!-- Медицинский крест на этикетке -->
+    <rect x="-5" y="-40" width="10" height="40" fill="#ffffff"/>
+    <rect x="-20" y="-25" width="40" height="10" fill="#ffffff"/>
+    
+    <!-- Уровень жидкости -->
+    <rect x="-55" y="0" width="110" height="95" fill="#0066ff" opacity="0.4" rx="10"/>
+    
+    <!-- Блики на флаконе -->
+    <ellipse cx="-30" cy="-80" rx="15" ry="40" fill="#ffffff" opacity="0.3"/>
+    <ellipse cx="35" cy="-40" rx="8" ry="30" fill="#ffffff" opacity="0.2"/>
+    
+    <!-- Крышка -->
+    <rect x="-30" y="-200" width="60" height="20" fill="#2E29FF" rx="3"/>
+    <rect x="-25" y="-180" width="50" height="8" fill="#1a1a80"/>
+  </g>
+  
+  <!-- Подпись (опционально) -->
+  <text x="256" y="460" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#ffffff" text-anchor="middle" opacity="0.9">VP</text>
+</svg>

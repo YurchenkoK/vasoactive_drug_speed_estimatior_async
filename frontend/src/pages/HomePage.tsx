@@ -2,11 +2,13 @@ import { Link } from "react-router-dom";
 import Carousel from "../components/Carousel";
 import "./HomePage.css";
 
+const BASE_URL = import.meta.env.BASE_URL;
+
 const drugImages = [
-  "/EpiVial.jpg",
-  "/Milrinonepackvial.png",
-  "/nitroglic.jpg",
-  "/phenylephirine.jpg",
+  `${BASE_URL}EpiVial.jpg`,
+  `${BASE_URL}Milrinonepackvial.png`,
+  `${BASE_URL}nitroglic.jpg`,
+  `${BASE_URL}phenylephirine.jpg`,
 ];
 
 export default function HomePage() {

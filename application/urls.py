@@ -22,7 +22,6 @@ schema_view = get_schema_view(
 urlpatterns = [
     path('admin/', admin.site.urls),
     
-    # HTML views (не включаются в Swagger)
     path('', views.search, name='search'),
     path('vasoactive_drug/<int:drug_id>/', views.vasoactive_drug_detail, name='vasoactive_drug_detail'),
     path('add_to_order/<int:drug_id>/', views.add_to_order_html, name='add_to_order'),

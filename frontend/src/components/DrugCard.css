@@ -61,3 +61,46 @@
   background-color: #2519CC;
   color: white;
 }
+
+/* Адаптивность для DrugCard */
+@media (max-width: 768px) {
+  .drug-card {
+    padding: 15px 12px;
+    min-height: 300px;
+  }
+  
+  .drug-image {
+    height: 120px;
+  }
+  
+  .drug-name {
+    font-size: 15px;
+  }
+  
+  .drug-concentration {
+    font-size: 12px;
+    margin-bottom: 50px;
+  }
+  
+  .details-button {
+    font-size: 12px;
+    padding: 7px 16px;
+    bottom: 12px;
+    right: 12px;
+  }
+}
+
+@media (max-width: 576px) {
+  .drug-card {
+    padding: 12px;
+    min-height: 280px;
+  }
+  
+  .drug-image {
+    height: 100px;
+  }
+  
+  .drug-name {
+    font-size: 14px;
+  }
+}

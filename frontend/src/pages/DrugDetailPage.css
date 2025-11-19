@@ -60,22 +60,61 @@
   cursor: pointer;
 }
 
+/* Адаптивность для DrugDetailPage */
+@media (max-width: 992px) {
+  .drug-detail {
+    gap: 30px;
+    padding: 30px;
+  }
+  
+  .drug-detail-image img {
+    width: 250px;
+    height: 250px;
+  }
+  
+  .drug-detail-title {
+    font-size: 32px;
+  }
+}
+
 @media (max-width: 768px) {
   .drug-detail {
     flex-direction: column;
     padding: 20px;
+    gap: 20px;
   }
 
   .drug-detail-image img {
     width: 100%;
     height: auto;
+    max-width: 300px;
+    margin: 0 auto;
   }
 
   .drug-detail-title {
     font-size: 28px;
+    text-align: center;
   }
 
   .drug-params p {
     font-size: 16px;
+  }
+  
+  .drug-detail-form .details-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 576px) {
+  .drug-detail {
+    padding: 15px;
+  }
+  
+  .drug-detail-title {
+    font-size: 24px;
+  }
+  
+  .drug-params p {
+    font-size: 15px;
   }
 }

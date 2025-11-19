@@ -6,12 +6,13 @@ interface DrugCardProps {
   drug: Drug;
 }
 
-const DEFAULT_IMAGE = "http://localhost:9000/images/placeholder-drug.png";
+const BASE_URL = import.meta.env.BASE_URL;
+const DEFAULT_IMAGE = `${BASE_URL}placeholder-drug.png`;
 
 export default function DrugCard({ drug }: DrugCardProps) {
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.target as HTMLImageElement;
-    if (img.src !== window.location.origin + DEFAULT_IMAGE) {
+    if (!img.src.includes('placeholder-drug.png')) {
       img.src = DEFAULT_IMAGE;
       img.onerror = null;
     }

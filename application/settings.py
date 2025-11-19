@@ -6,7 +6,7 @@ SECRET_KEY = 'django-insecure-@f*bff3e&j(v$@9d59!w&2r2h56ufco6)13g+3-984bfr+zriv
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '*']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -18,11 +18,13 @@ INSTALLED_APPS = [
     
     'rest_framework',
     'drf_yasg',
+    'corsheaders',
     
     'stocks',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
@@ -113,19 +115,23 @@ SWAGGER_SETTINGS = {
     'LOGOUT_URL': '/api-auth/logout/',
 }
 
-# Redis configuration
 REDIS_HOST = '0.0.0.0'
 REDIS_PORT = 6379
 
-# Session configuration
-# Используем БД для хранения сессий (проще в настройке, работает из коробки)
-# Альтернатива: можно использовать Redis, но требуется настройка без AUTH
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
-SESSION_COOKIE_AGE = 86400  # 24 hours
+SESSION_COOKIE_AGE = 86400
 SESSION_SAVE_EVERY_REQUEST = True
 
-# Для демонстрации "содержимого сессий" используем:
-# python manage.py shell
-# >>> from django.contrib.sessions.models import Session
-# >>> Session.objects.all()
-# Или SQL: SELECT * FROM django_session;
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]

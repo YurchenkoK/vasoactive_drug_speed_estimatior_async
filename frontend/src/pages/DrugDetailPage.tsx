@@ -6,7 +6,8 @@ import { getDrug } from "../drugsApi";
 import { mockDrugs } from "../mock/DrugMock";
 import "./DrugDetailPage.css";
 
-const DEFAULT_IMAGE = "http://localhost:9000/images/placeholder-drug.png";
+const BASE_URL = import.meta.env.BASE_URL;
+const DEFAULT_IMAGE = `${BASE_URL}placeholder-drug.png`;
 
 export default function DrugDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -39,7 +40,7 @@ export default function DrugDetailPage() {
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.target as HTMLImageElement;
-    if (img.src !== window.location.origin + DEFAULT_IMAGE) {
+    if (!img.src.includes('placeholder-drug.png')) {
       img.src = DEFAULT_IMAGE;
       img.onerror = null;
     }

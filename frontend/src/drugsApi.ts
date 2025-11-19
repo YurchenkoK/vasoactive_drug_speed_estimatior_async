@@ -1,12 +1,18 @@
 import type { Drug } from "./DrugTypes";
 
+const isTauri = typeof window !== 'undefined' && '__TAURI__' in window;
+
+const API_BASE_URL = isTauri 
+  ? 'http://192.168.1.100:8000'
+  : '';
+
 export async function listDrugs(params?: { 
   name?: string; 
   concentration_min?: number;
   concentration_max?: number;
 }): Promise<Drug[]> {
   try {
-    let path = "/api/drugs/";
+    let path = `${API_BASE_URL}/api/drugs/`;
     if (params) {
       const query = new URLSearchParams();
       if (params.name) query.append("name", params.name);
@@ -27,7 +33,7 @@ export async function listDrugs(params?: {
 
 export async function getDrug(id: number): Promise<Drug | null> {
   try {
-    const res = await fetch(`/api/drugs/${id}/`, { headers: { Accept: "application/json" } });
+    const res = await fetch(`${API_BASE_URL}/api/drugs/${id}/`, { headers: { Accept: "application/json" } });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
   } catch (err) {

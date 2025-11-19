@@ -13,3 +13,16 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# HTTPS certificates (never commit private keys!)
+*.key
+*.crt
+*.pem
+ca.crt
+ca.key
+cert.crt
+cert.key
+
+# Tauri
+src-tauri/target
+src-tauri/gen

@@ -118,7 +118,6 @@ class UserProfile(APIView):
         responses={200: UserSerializer, 403: 'Forbidden', 404: 'Not Found'}
     )
     def get(self, request, pk, format=None):
-        # Пользователь может просматривать только свой профиль
         if request.user.id != pk:
             return Response({"error": "Доступ запрещен"}, 
                           status=status.HTTP_403_FORBIDDEN)
@@ -131,7 +130,6 @@ class UserProfile(APIView):
         responses={200: UserSerializer, 400: 'Bad Request', 403: 'Forbidden'}
     )
     def put(self, request, pk, format=None):
-        # Пользователь может редактировать только свой профиль
         if request.user.id != pk:
             return Response({"error": "Доступ запрещен"}, 
                           status=status.HTTP_403_FORBIDDEN)
@@ -237,18 +235,15 @@ class OrderList(APIView):
     def get(self, request, format=None):
         user = request.user
         
-        # Менеджеры и администраторы видят все заявки
         if user.is_staff or user.is_superuser:
             orders = Order.objects.exclude(
                 status__in=[Order.OrderStatus.DELETED, Order.OrderStatus.DRAFT]
             )
         else:
-            # Обычные пользователи видят только свои заявки
             orders = Order.objects.filter(creator=user).exclude(
                 status__in=[Order.OrderStatus.DELETED, Order.OrderStatus.DRAFT]
             )
         
-        # Фильтрация по дате формирования
         date_from = request.query_params.get('date_from', None)
         date_to = request.query_params.get('date_to', None)
         if date_from:
@@ -256,7 +251,6 @@ class OrderList(APIView):
         if date_to:
             orders = orders.filter(formation_datetime__lte=date_to)
         
-        # Фильтрация по статусу
         order_status = request.query_params.get('status', None)
         if order_status:
             orders = orders.filter(status=order_status)
@@ -282,7 +276,6 @@ class OrderDetail(APIView):
     )
     def get(self, request, pk, format=None):
         order = get_object_or_404(Order, pk=pk)
-        # Проверка прав: либо создатель, либо менеджер/администратор
         if order.creator != request.user and not (request.user.is_staff or request.user.is_superuser):
             return Response({"error": "Нет доступа к этой заявке"}, 
                           status=status.HTTP_403_FORBIDDEN)
@@ -297,7 +290,6 @@ class OrderDetail(APIView):
     )
     def put(self, request, pk, format=None):
         order = get_object_or_404(Order, pk=pk)
-        # Только создатель может редактировать свою заявку
         if order.creator != request.user:
             return Response({"error": "Можно редактировать только свои заявки"}, 
                           status=status.HTTP_403_FORBIDDEN)
@@ -312,7 +304,6 @@ class OrderDetail(APIView):
     
     def delete(self, request, pk, format=None):
         order = get_object_or_404(Order, pk=pk)
-        # Только создатель может удалять свою заявку
         if order.creator != request.user:
             return Response({"error": "Можно удалять только свои заявки"}, 
                           status=status.HTTP_403_FORBIDDEN)
@@ -329,7 +320,6 @@ class OrderDetail(APIView):
 @permission_classes([IsAuthenticated])
 def form_order(request, pk):
     order = get_object_or_404(Order, pk=pk)
-    # Только создатель может формировать свою заявку
     if order.creator != request.user:
         return Response({"error": "Можно формировать только свои заявки"}, 
                        status=status.HTTP_403_FORBIDDEN)
@@ -390,9 +380,6 @@ def reject_order(request, pk):
     return Response(serializer.data)
 
 
-####################################
-# Domain: M-M (Drug in Order actions)
-####################################
 
 
 @swagger_auto_schema(
@@ -416,7 +403,6 @@ def reject_order(request, pk):
 @permission_classes([IsAuthenticated])
 def drug_in_order_actions(request, order_pk, drug_pk):
     order = get_object_or_404(Order, pk=order_pk)
-    # Только создатель может изменять свою заявку
     if order.creator != request.user:
         return Response({"error": "Можно изменять только свои заявки"}, 
                        status=status.HTTP_403_FORBIDDEN)
@@ -458,9 +444,6 @@ def drug_in_order_actions(request, order_pk, drug_pk):
         return Response(serializer.data)
 
 
-####################################
-# Domain: Drugs
-####################################
 
 
 class DrugList(APIView):
@@ -588,9 +571,6 @@ def add_drug_to_order(request, pk):
                    status=status.HTTP_201_CREATED)
 
 
-####################################
-# Domain: HTML / Template Views
-####################################
 
 
 def search(request):
@@ -676,7 +656,6 @@ def add_to_order_html(request, drug_id):
 
 
 def estimation_infusion_speed(request, order_id=None):
-    # Используем авторизованного пользователя или первого из БД для демо
     if request.user.is_authenticated:
         user = request.user
     else:
@@ -704,7 +683,6 @@ def estimation_infusion_speed(request, order_id=None):
     drugs_in_order = DrugInOrder.objects.filter(order=draft_order).select_related('drug')
     estimation_items = []
     for drug_in_order in drugs_in_order:
-        # Получаем значение ampoule_volume и форматируем с точкой
         ampoule_vol = drug_in_order.ampoule_volume if drug_in_order.ampoule_volume else drug_in_order.drug.volume
         ampoule_vol_str = str(ampoule_vol).replace(',', '.')
         

@@ -22,3 +22,17 @@ ENV/
 
 # OS
 .DS_Store
+
+# Examples
+example/
+
+# Frontend build artifacts
+frontend/dist/
+frontend/dev-dist/
+frontend/node_modules/
+frontend/.vite/
+frontend/tsconfig.tsbuildinfo
+
+# Tauri
+frontend/src-tauri/target/
+frontend/src-tauri/Cargo.lock

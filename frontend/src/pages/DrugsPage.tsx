@@ -1,62 +1,79 @@
 import { useEffect, useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import Breadcrumbs from "../components/Breadcrumbs";
 import DrugCard from "../components/DrugCard";
 import type { Drug } from "../DrugTypes";
 import { listDrugs } from "../drugsApi";
 import { mockDrugs } from "../mock/DrugMock";
+import type { RootState } from "../store";
+import { setName } from "../features/drugsFilter/filterSlice";
 import "./DrugsPage.css";
 
 export default function DrugsPage() {
+  const dispatch = useDispatch();
+  const searchName = useSelector((state: RootState) => state.drugsFilter.name);
+  
+
   const [drugs, setDrugs] = useState<Drug[]>([]);
-  const [searchName, setSearchName] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [notFound, setNotFound] = useState(false);
+
+  const fetchDrugs = async (filter?: { name?: string; concentration_min?: number; concentration_max?: number }) => {
+    setLoading(true);
+    try {
+      const data = await listDrugs(filter);
+      if (data && data.length > 0) {
+        setDrugs(data);
+        setNotFound(false);
+      } else {
+        const mockFiltered = mockDrugs.filter((d) => {
+          let matches = true;
+          if (filter?.name) {
+            matches = matches && d.name.toLowerCase().includes(filter.name.toLowerCase());
+          }
+          if (filter?.concentration_min !== undefined && filter?.concentration_min !== null) {
+            matches = matches && d.concentration >= filter.concentration_min;
+          }
+          if (filter?.concentration_max !== undefined && filter?.concentration_max !== null) {
+            matches = matches && d.concentration <= filter.concentration_max;
+          }
+          return matches;
+        });
+        setDrugs(mockFiltered);
+        setNotFound(mockFiltered.length === 0);
+      }
+    } catch {
+      const mockFiltered = mockDrugs.filter((d) => {
+        let matches = true;
+        if (filter?.name) {
+          matches = matches && d.name.toLowerCase().includes(filter.name.toLowerCase());
+        }
+        if (filter?.concentration_min !== undefined && filter?.concentration_min !== null) {
+          matches = matches && d.concentration >= filter.concentration_min;
+        }
+        if (filter?.concentration_max !== undefined && filter?.concentration_max !== null) {
+          matches = matches && d.concentration <= filter.concentration_max;
+        }
+        return matches;
+      });
+      setDrugs(mockFiltered);
+      setNotFound(mockFiltered.length === 0);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = () => {
+    const filter: any = {};
+    if (searchName) filter.name = searchName;
+    fetchDrugs(Object.keys(filter).length > 0 ? filter : undefined);
+  };
 
   useEffect(() => {
-    loadDrugs();
+    const filter: any = {};
+    if (searchName) filter.name = searchName;
+    fetchDrugs(Object.keys(filter).length > 0 ? filter : undefined);
   }, []);
-
-  const loadDrugs = async () => {
-    try {
-      const data = await listDrugs();
-      if (data.length > 0) {
-        setDrugs(data);
-      } else {
-        setDrugs(mockDrugs);
-      }
-    } catch {
-      setDrugs(mockDrugs);
-    }
-  };
-
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const params: any = {};
-      if (searchName) params.name = searchName;
-
-      const filtered = await listDrugs(params);
-      
-      if (filtered.length > 0) {
-        setDrugs(filtered);
-      } else {
-        // Фильтрация mock данных
-        let result = mockDrugs;
-        if (searchName) {
-          result = result.filter(d => 
-            d.name.toLowerCase().includes(searchName.toLowerCase())
-          );
-        }
-        setDrugs(result);
-      }
-    } catch {
-      let result = mockDrugs;
-      if (searchName) {
-        result = result.filter(d => 
-          d.name.toLowerCase().includes(searchName.toLowerCase())
-        );
-      }
-      setDrugs(result);
-    }
-  };
 
   return (
     <div>
@@ -67,27 +84,34 @@ export default function DrugsPage() {
         ]} />
       </div>
       <div className="search-section">
-        <form onSubmit={handleSearch} className="search-form">
+        <div className="search-form">
           <input
             type="text"
-            placeholder="Поиск по названию"
+            placeholder="Название препарата..."
             className="search-input"
             value={searchName}
-            onChange={(e) => setSearchName(e.target.value)}
+            onChange={(e) => dispatch(setName(e.target.value))}
+            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
           />
-          <button type="submit" className="search-button">
+          <button onClick={handleSearch} className="search-button">
             Найти
           </button>
-        </form>
-      </div>
-      
-      <div className="container">
-        <div className="drugs-grid">
-          {drugs.map((drug) => (
-            <DrugCard key={drug.id} drug={drug} />
-          ))}
         </div>
       </div>
+
+      {loading ? (
+        <div className="loading-message">Загрузка...</div>
+      ) : notFound ? (
+        <div className="not-found-message">Ничего не найдено</div>
+      ) : (
+        <div className="container">
+          <div className="drugs-grid">
+            {drugs.map((drug) => (
+              <DrugCard key={drug.id} drug={drug} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
