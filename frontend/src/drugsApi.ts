@@ -3,8 +3,7 @@ import type { Drug } from "./DrugTypes";
 const isTauri = typeof window !== 'undefined' && '__TAURI__' in window;
 
 const API_BASE_URL = isTauri 
-  ? 'http://192.168.1.100:8000'
-  : '';
+  ?'http://192.168.1.240:8000':'';
 
 export async function listDrugs(params?: { 
   name?: string; 
