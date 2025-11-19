@@ -39,10 +39,10 @@ export default function DrugDetailPage() {
   }
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    const img = e.target as HTMLImageElement;
-    if (!img.src.includes('placeholder-drug.png')) {
+    const img = e.currentTarget as HTMLImageElement;
+    if (!img.dataset.fallback) {
+      img.dataset.fallback = '1';
       img.src = DEFAULT_IMAGE;
-      img.onerror = null;
     }
   };
 

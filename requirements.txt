@@ -6,3 +6,4 @@ redis>=6.0
 django-redis>=6.0
 boto3>=1.26
 django-cors-headers>=4.0
+minio>=7.0

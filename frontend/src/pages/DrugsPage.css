@@ -6,7 +6,7 @@
 
 .search-section {
   background-color: #F8F8F8;
-  margin-top: 15px;
+  margin-top: 25px;
   padding: 5px;
   display: flex;
   justify-content: center;
@@ -18,13 +18,14 @@
   align-items: center;
   gap: 12px;
   width: 100%;
-  max-width: 900px; /* ограничим ширину формы */
-  padding: 20px 15px;
+  max-width: 900px;
+  padding: 0px 15px;
   justify-content: center;
+  flex-wrap: nowrap;
 }
 
 .search-input {
-  padding: 16px 20px;
+  padding: 21px 25px;
   border: 1px solid #ddd;
   border-radius: 8px;
   width: 100%;
@@ -32,7 +33,8 @@
   font-size: 14px;
   background-color: #ffffff;
   box-sizing: border-box;
-  flex: 1 1 auto; /* позволит полю занимать доступное пространство */
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .search-input::-webkit-outer-spin-button,
@@ -103,6 +105,7 @@
   transition: background-color 0.2s;
   width: 83px;
   height: 40px;
+  flex-shrink: 0;
 }
 
 .search-button:hover {
@@ -178,16 +181,20 @@
   }
   
   .search-form {
-    flex-direction: column;
+    flex-wrap: nowrap;
     width: 100%;
+    padding: 20px 10px;
   }
   
   .search-input {
     width: 100%;
+    min-width: 0;
+    flex: 1 1 auto;
   }
   
   .search-button {
-    width: 100%;
+    width: 83px;
+    flex-shrink: 0;
   }
   
   .drugs-grid {

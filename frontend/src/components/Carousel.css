@@ -61,14 +61,17 @@
   align-items: center;
   justify-content: center;
   color: #2e29ff;
-  transition: background-color 0.2s, transform 0.2s;
+  transition: background-color 0.2s;
   line-height: 1;
   padding: 0;
 }
 
 .carousel-button:hover {
   background-color: rgba(46, 41, 255, 0.1);
-  transform: translateY(-50%) scale(1.1);
+}
+
+.carousel-button:active {
+  background-color: rgba(46, 41, 255, 0.1);
 }
 
 .carousel-button-prev {
