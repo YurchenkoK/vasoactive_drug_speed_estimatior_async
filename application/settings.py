@@ -115,8 +115,10 @@ SWAGGER_SETTINGS = {
     'LOGOUT_URL': '/api-auth/logout/',
 }
 
-REDIS_HOST = '0.0.0.0'
+REDIS_HOST = 'redis'  # Redis container name in Docker
 REDIS_PORT = 6379
+REDIS_PASSWORD = 'password'  # Redis authentication password
+# REDIS_USERNAME = 'default'  # Uncomment if using Redis ACL (Redis 6+)
 
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
 SESSION_COOKIE_AGE = 86400

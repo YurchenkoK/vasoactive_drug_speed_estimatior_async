@@ -36,3 +36,34 @@ frontend/tsconfig.tsbuildinfo
 # Tauri
 frontend/src-tauri/target/
 frontend/src-tauri/Cargo.lock
+
+# Local env and secrets
+.env
+.env.*
+secrets.yaml
+
+# Test, coverage and caches
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.cache/
+pip-wheel-metadata/
+.mypy_cache/
+.ruff_cache/
+
+# Editor/temp files
+*~
+# backup files
+*.bak
+*.swp
+*.swo
+._*
+
+# Markdown drafts and generated docs (keep committed README.md intentionally)
+*.md~
+*.draft.md
+docs/_build/
+
+# OS specific
+.localized

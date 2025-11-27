@@ -16,9 +16,11 @@ from drf_yasg import openapi
 
 from stocks.serializers import (
     DrugSerializer, FullDrugSerializer, OrderSerializer, 
-    FullOrderSerializer, DrugInOrderSerializer, UserSerializer, UserRegistrationSerializer
+    FullOrderSerializer, DrugInOrderSerializer, UserSerializer, 
+    UserRegistrationSerializer, UserLoginSerializer
 )
 from stocks.models import Drug, Order, DrugInOrder
+from stocks.redis_client import redis_user_client
 from minio import Minio
 from django.conf import settings
 from django.core.files.uploadedfile import InMemoryUploadedFile
@@ -101,27 +103,58 @@ class UserRegistration(APIView):
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            return Response({
-                "id": user.id,
-                "username": user.username,
+            if user is None:
+                return Response({
+                    "error": "Не удалось создать пользователя"
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Create session for the new user
+            session_id = redis_user_client.create_session(user['username'])
+            
+            response = Response({
+                "id": user['id'],
+                "username": user['username'],
                 "message": "Пользователь успешно зарегистрирован"
             }, status=status.HTTP_201_CREATED)
+            
+            # Set session cookie
+            response.set_cookie('redis_session_id', session_id, 
+                              max_age=86400, httponly=True, samesite='Lax')
+            
+            return response
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserProfile(APIView):
-    authentication_classes = [SessionAuthentication, BasicAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    
+    def _get_user_from_request(self, request):
+        """Get user from Redis session"""
+        session_id = request.COOKIES.get('redis_session_id')
+        if not session_id:
+            return None
+        return redis_user_client.get_session(session_id)
     
     @swagger_auto_schema(
         operation_description="Получить информацию о профиле пользователя. Пользователь может просматривать только свой профиль.",
         responses={200: UserSerializer, 403: 'Forbidden', 404: 'Not Found'}
     )
     def get(self, request, pk, format=None):
-        if request.user.id != pk:
+        current_user = self._get_user_from_request(request)
+        if not current_user:
+            return Response({"error": "Требуется аутентификация"}, 
+                          status=status.HTTP_401_UNAUTHORIZED)
+        
+        if current_user['id'] != pk:
             return Response({"error": "Доступ запрещен"}, 
                           status=status.HTTP_403_FORBIDDEN)
-        user = get_object_or_404(User, pk=pk)
+        
+        user = redis_user_client.get_user_by_id(pk)
+        if not user:
+            return Response({"error": "Пользователь не найден"}, 
+                          status=status.HTTP_404_NOT_FOUND)
+        
         serializer = UserSerializer(user)
         return Response(serializer.data)
     
@@ -130,54 +163,66 @@ class UserProfile(APIView):
         responses={200: UserSerializer, 400: 'Bad Request', 403: 'Forbidden'}
     )
     def put(self, request, pk, format=None):
-        if request.user.id != pk:
+        current_user = self._get_user_from_request(request)
+        if not current_user:
+            return Response({"error": "Требуется аутентификация"}, 
+                          status=status.HTTP_401_UNAUTHORIZED)
+        
+        if current_user['id'] != pk:
             return Response({"error": "Доступ запрещен"}, 
                           status=status.HTTP_403_FORBIDDEN)
-        user = get_object_or_404(User, pk=pk)
+        
+        user = redis_user_client.get_user_by_id(pk)
+        if not user:
+            return Response({"error": "Пользователь не найден"}, 
+                          status=status.HTTP_404_NOT_FOUND)
+        
         serializer = UserSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
+            updated_user = serializer.save()
+            return Response(UserSerializer(updated_user).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @swagger_auto_schema(
     method='post',
-    request_body=openapi.Schema(
-        type=openapi.TYPE_OBJECT,
-        required=['username', 'password'],
-        properties={
-            'username': openapi.Schema(type=openapi.TYPE_STRING, description='Имя пользователя'),
-            'password': openapi.Schema(type=openapi.TYPE_STRING, description='Пароль')
-        }
-    ),
+    request_body=UserLoginSerializer,
     responses={200: UserSerializer, 400: 'Bad Request', 401: 'Unauthorized'}
 )
 @api_view(['POST'])
 @permission_classes([AllowAny])
 @authentication_classes([])
 def user_login(request):
-    username = request.data.get('username')
-    password = request.data.get('password')
+    serializer = UserLoginSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-    if not username or not password:
-        return Response({"error": "Укажите username и password"}, 
-                       status=status.HTTP_400_BAD_REQUEST)
+    username = serializer.validated_data['username']
+    password = serializer.validated_data['password']
     
-    user = authenticate(request, username=username, password=password)
+    # Authenticate with Redis
+    user = redis_user_client.authenticate(username, password)
     
     if user is not None:
-        login(request, user)
-        return Response({
-            "id": user.id,
-            "username": user.username,
-            "first_name": user.first_name,
-            "last_name": user.last_name,
-            "email": user.email,
-            "is_staff": user.is_staff,
-            "is_superuser": user.is_superuser,
+        # Create session
+        session_id = redis_user_client.create_session(username)
+        
+        response = Response({
+            "id": user['id'],
+            "username": user['username'],
+            "first_name": user.get('first_name', ''),
+            "last_name": user.get('last_name', ''),
+            "email": user.get('email', ''),
+            "is_staff": user.get('is_staff', False),
+            "is_superuser": user.get('is_superuser', False),
             "message": "Успешная аутентификация"
         })
+        
+        # Set session cookie
+        response.set_cookie('redis_session_id', session_id, 
+                          max_age=86400, httponly=True, samesite='Lax')
+        
+        return response
     else:
         return Response({"error": "Неверные учетные данные"}, 
                        status=status.HTTP_401_UNAUTHORIZED)
@@ -188,10 +233,41 @@ def user_login(request):
     responses={200: 'Success'}
 )
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
+@authentication_classes([])
 def user_logout(request):
-    logout(request)
-    return Response({"message": "Деавторизация выполнена"})
+    # Delete Redis session
+    session_id = request.COOKIES.get('redis_session_id')
+    if session_id:
+        redis_user_client.delete_session(session_id)
+    
+    response = Response({"message": "Деавторизация выполнена"})
+    response.delete_cookie('redis_session_id')
+    
+    return response
+
+
+@swagger_auto_schema(
+    method='get',
+    responses={200: UserSerializer, 401: 'Unauthorized'}
+)
+@api_view(['GET'])
+@permission_classes([AllowAny])
+@authentication_classes([])
+def get_current_user(request):
+    """Get current authenticated user from Redis session"""
+    session_id = request.COOKIES.get('redis_session_id')
+    if not session_id:
+        return Response({"error": "Требуется аутентификация"}, 
+                       status=status.HTTP_401_UNAUTHORIZED)
+    
+    user = redis_user_client.get_session(session_id)
+    if not user:
+        return Response({"error": "Сессия истекла"}, 
+                       status=status.HTTP_401_UNAUTHORIZED)
+    
+    serializer = UserSerializer(user)
+    return Response(serializer.data)
 
 
 @swagger_auto_schema(

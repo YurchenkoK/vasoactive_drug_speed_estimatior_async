@@ -51,6 +51,7 @@ urlpatterns = [
    path('api/users/profile/<int:pk>/', views.UserProfile.as_view(), name='user-profile'),
    path('api/users/login/', views.user_login, name='user-login'),
    path('api/users/logout/', views.user_logout, name='user-logout'),
+   path('api/users/me/', views.get_current_user, name='user-current'),
     
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('swagger<format>/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
