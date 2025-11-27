@@ -392,8 +392,7 @@ def reject_order(request, pk):
     request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
         properties={
-            'ampoule_volume': openapi.Schema(type=openapi.TYPE_NUMBER, description='Объём ампулы (мл)'),
-            'drug_rate': openapi.Schema(type=openapi.TYPE_NUMBER, description='Скорость введения препарата')
+            'ampoule_volume': openapi.Schema(type=openapi.TYPE_NUMBER, description='Объём ампулы (мл)')
         }
     ),
     responses={200: 'Success', 403: 'Forbidden'},
@@ -418,7 +417,6 @@ def drug_in_order_actions(request, order_pk, drug_pk):
     
     elif request.method == 'PUT':
         ampoule_volume = request.data.get('ampoule_volume')
-        drug_rate = request.data.get('drug_rate')
         
         if ampoule_volume is not None:
             try:
@@ -428,16 +426,6 @@ def drug_in_order_actions(request, order_pk, drug_pk):
                 return Response({"error": "Неверный формат объёма ампулы"}, 
                                status=status.HTTP_400_BAD_REQUEST)
         
-        if drug_rate is not None:
-            try:
-                drug_rate_str = str(drug_rate).replace(',', '.')
-                drug_in_order.drug_rate = float(drug_rate_str)
-            except (ValueError, TypeError):
-                return Response({"error": "Неверный формат скорости введения"}, 
-                               status=status.HTTP_400_BAD_REQUEST)
-        
-        drug_in_order.save()
-        drug_in_order.calculate_infusion_speed()
         drug_in_order.save()
         
         serializer = DrugInOrderSerializer(drug_in_order)
@@ -694,8 +682,7 @@ def estimation_infusion_speed(request, order_id=None):
             'volume': f'{drug_in_order.drug.volume} мл',
             'ampoule_volume': ampoule_vol_str,
             'image': drug_in_order.drug.image_url or 'http://localhost:9000/images/default.png',
-            'infusion_speed': f'{drug_in_order.infusion_speed}' if drug_in_order.infusion_speed else '',
-            'drug_rate': f'{drug_in_order.drug_rate}' if drug_in_order.drug_rate else '',
+            'infusion_speed': f'{drug_in_order.infusion_speed}' if drug_in_order.infusion_speed else ''
         })
     
     estimation_params = {

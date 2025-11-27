@@ -50,8 +50,7 @@ class DrugInOrder(models.Model):
     order = models.ForeignKey(Order, on_delete=models.DO_NOTHING, verbose_name="Заявка")
     drug = models.ForeignKey(Drug, on_delete=models.DO_NOTHING, verbose_name="Препарат")
     ampoule_volume = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Объём ампулы (мл)")
-    infusion_speed = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Скорость инфузии (мл/мин)")
-    drug_rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Скорость введения (мг/кг/час)")
+    infusion_speed = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Скорость введения (мг/кг/час)")
     
     class Meta:
         db_table = 'ssr_inDb_druginorder'
@@ -68,15 +67,20 @@ class DrugInOrder(models.Model):
         super().save(*args, **kwargs)
     
     def calculate_infusion_speed(self):
-        if self.order and self.order.solvent_volume and self.order.patient_weight:
+        """
+        Расчёт скорости введения препарата в мг/кг/час
+        """
+        if self.order and self.order.solvent_volume and self.order.patient_weight and self.order.ampoules_count:
             volume = self.ampoule_volume if self.ampoule_volume else self.drug.volume
+            # Общее количество препарата в мг
             total_drug_mg = self.drug.concentration * self.order.ampoules_count * volume
-            infusion_speed_ml_min = self.order.solvent_volume / 60
-            infusion_speed_ml_hour = infusion_speed_ml_min * 60
+            # Скорость инфузии в мл/час (растворитель вводится за 60 минут)
+            infusion_speed_ml_hour = self.order.solvent_volume
+            # Количество препарата, вводимое за час (мг/час)
             drug_mg_per_hour = (infusion_speed_ml_hour / self.order.solvent_volume) * total_drug_mg
-            drug_rate_mg_kg_hour = drug_mg_per_hour / self.order.patient_weight
+            # Скорость введения препарата (мг/кг/час)
+            infusion_speed = drug_mg_per_hour / self.order.patient_weight
             
-            self.infusion_speed = round(infusion_speed_ml_min, 2)
-            self.drug_rate = round(drug_rate_mg_kg_hour, 2)
-            return self.infusion_speed, self.drug_rate
-        return None, None
+            self.infusion_speed = round(infusion_speed, 2)
+            return self.infusion_speed
+        return None

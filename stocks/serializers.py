@@ -29,7 +29,7 @@ class DrugInOrderSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = DrugInOrder
-        fields = ["id", "drug_id", "drug_name", "ampoule_volume", "infusion_speed", "drug_rate"]
+        fields = ["id", "drug_id", "drug_name", "ampoule_volume", "infusion_speed"]
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -72,8 +72,7 @@ class FullOrderSerializer(serializers.ModelSerializer):
             "drug_id": dio.drug.id,
             "drug_name": dio.drug.name,
             "ampoule_volume": dio.ampoule_volume,
-            "infusion_speed": dio.infusion_speed,
-            "drug_rate": dio.drug_rate
+            "infusion_speed": dio.infusion_speed
         } for dio in drug_in_orders]
 
 

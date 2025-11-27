@@ -61,6 +61,6 @@ class OrderAdmin(admin.ModelAdmin):
 
 @admin.register(DrugInOrder)
 class DrugInOrderAdmin(admin.ModelAdmin):
-    list_display = ('id', 'order', 'drug', 'infusion_speed', 'drug_rate')
+    list_display = ('id', 'order', 'drug', 'ampoule_volume', 'infusion_speed')
     list_filter = ('order__status',)
     search_fields = ('drug__name', 'order__id')
