@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from stocks.models import Drug, Order, DrugInOrder
-from django.contrib.auth.models import User
 from collections import OrderedDict
 from stocks.redis_client import redis_user_client
 
@@ -34,8 +33,8 @@ class DrugInOrderSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    creator = serializers.SlugRelatedField(slug_field='username', read_only=True)
-    moderator = serializers.SlugRelatedField(slug_field='username', read_only=True)
+    creator = serializers.CharField(source='creator_username', read_only=True)
+    moderator = serializers.CharField(source='moderator_username', read_only=True)
     
     class Meta:
         model = Order
@@ -54,8 +53,8 @@ class OrderSerializer(serializers.ModelSerializer):
 
 
 class FullOrderSerializer(serializers.ModelSerializer):
-    creator = serializers.SlugRelatedField(slug_field='username', read_only=True)
-    moderator = serializers.SlugRelatedField(slug_field='username', read_only=True)
+    creator = serializers.CharField(source='creator_username', read_only=True)
+    moderator = serializers.CharField(source='moderator_username', read_only=True)
     drugs = serializers.SerializerMethodField()
     
     class Meta:

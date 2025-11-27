@@ -1,6 +1,5 @@
-import django.db.models.deletion
-from django.conf import settings
-from django.db import migrations, models
+# Combined initial migration
+from django.db import migrations
 
 
 class Migration(migrations.Migration):
@@ -8,62 +7,55 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
-        migrations.CreateModel(
-            name='Drug',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=255, verbose_name='Название')),
-                ('description', models.TextField(verbose_name='Показания')),
-                ('image_url', models.URLField(blank=True, max_length=500, null=True, verbose_name='URL изображения')),
-                ('concentration', models.DecimalField(decimal_places=2, max_digits=10, verbose_name='Концентрация (мг/мл)')),
-                ('volume', models.DecimalField(decimal_places=2, max_digits=10, verbose_name='Объём ампулы (мл)')),
-                ('is_active', models.BooleanField(default=True, verbose_name='Активен')),
-            ],
-            options={
-                'verbose_name': 'Препарат',
-                'verbose_name_plural': 'Препараты',
-                'db_table': 'ssr_inDb_drug',
-            },
+        # Tables ssr_inDb_drug, ssr_inDb_order, ssr_inDb_druginorder already exist
+        # This is a fake migration to establish Django's migration baseline
+        
+        # Drop Django auth tables (not used with Redis auth)
+        migrations.RunSQL(
+            sql='DROP TABLE IF EXISTS "auth_user_user_permissions" CASCADE;',
+            reverse_sql=migrations.RunSQL.noop
         ),
-        migrations.CreateModel(
-            name='Order',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('status', models.CharField(choices=[('DRAFT', 'Черновик'), ('DELETED', 'Удалён'), ('FORMED', 'Сформирован'), ('COMPLETED', 'Завершён'), ('REJECTED', 'Отклонён')], default='DRAFT', max_length=10, verbose_name='Статус')),
-                ('creation_datetime', models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')),
-                ('formation_datetime', models.DateTimeField(blank=True, null=True, verbose_name='Дата формирования')),
-                ('completion_datetime', models.DateTimeField(blank=True, null=True, verbose_name='Дата завершения')),
-                ('ampoules_count', models.IntegerField(blank=True, null=True, verbose_name='Количество ампул')),
-                ('solvent_volume', models.DecimalField(blank=True, decimal_places=2, max_digits=10, null=True, verbose_name='Объём растворителя (мл)')),
-                ('patient_weight', models.DecimalField(blank=True, decimal_places=2, max_digits=10, null=True, verbose_name='Масса пациента (кг)')),
-                ('creator', models.ForeignKey(on_delete=django.db.models.deletion.DO_NOTHING, related_name='created_orders', to=settings.AUTH_USER_MODEL, verbose_name='Создатель')),
-                ('moderator', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='moderated_orders', to=settings.AUTH_USER_MODEL, verbose_name='Модератор')),
-            ],
-            options={
-                'verbose_name': 'Заявка',
-                'verbose_name_plural': 'Заявки',
-                'db_table': 'ssr_inDb_order',
-            },
+        migrations.RunSQL(
+            sql='DROP TABLE IF EXISTS "auth_user_groups" CASCADE;',
+            reverse_sql=migrations.RunSQL.noop
         ),
-        migrations.CreateModel(
-            name='DrugInOrder',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('drug', models.ForeignKey(on_delete=django.db.models.deletion.DO_NOTHING, to='stocks.drug', verbose_name='Препарат')),
-                ('order', models.ForeignKey(on_delete=django.db.models.deletion.DO_NOTHING, to='stocks.order', verbose_name='Заявка')),
-                ('infusion_speed', models.DecimalField(blank=True, decimal_places=2, max_digits=10, null=True, verbose_name='Скорость инфузии (мл/мин)')),
-                ('drug_rate', models.DecimalField(blank=True, decimal_places=2, max_digits=10, null=True, verbose_name='Скорость введения (мг/кг/час)')),
-                ('ampoule_volume', models.DecimalField(blank=True, decimal_places=2, max_digits=10, null=True, verbose_name='Объём ампулы (мл)')),
-            ],
-            options={
-                'verbose_name': 'Препарат в заявке',
-                'verbose_name_plural': 'Препараты в заявках',
-                'db_table': 'ssr_inDb_druginorder',
-                'unique_together': {('order', 'drug')},
-            },
+        migrations.RunSQL(
+            sql='DROP TABLE IF EXISTS "auth_permission" CASCADE;',
+            reverse_sql=migrations.RunSQL.noop
         ),
+        migrations.RunSQL(
+            sql='DROP TABLE IF EXISTS "auth_group_permissions" CASCADE;',
+            reverse_sql=migrations.RunSQL.noop
+        ),
+        migrations.RunSQL(
+            sql='DROP TABLE IF EXISTS "auth_group" CASCADE;',
+            reverse_sql=migrations.RunSQL.noop
+        ),
+        migrations.RunSQL(
+            sql='DROP TABLE IF EXISTS "auth_user" CASCADE;',
+            reverse_sql=migrations.RunSQL.noop
+        ),
+        migrations.RunSQL(
+            sql='DROP TABLE IF EXISTS "django_admin_log" CASCADE;',
+            reverse_sql=migrations.RunSQL.noop
+        ),
+        
+        # Drop empty duplicate tables created by Django
+        migrations.RunSQL(
+            sql='DROP TABLE IF EXISTS "stocks_druginorder" CASCADE;',
+            reverse_sql=migrations.RunSQL.noop
+        ),
+        migrations.RunSQL(
+            sql='DROP TABLE IF EXISTS "stocks_order" CASCADE;',
+            reverse_sql=migrations.RunSQL.noop
+        ),
+        migrations.RunSQL(
+            sql='DROP TABLE IF EXISTS "stocks_drug" CASCADE;',
+            reverse_sql=migrations.RunSQL.noop
+        ),
+        
+        # Note: Columns creator_username and moderator_username already exist in database
     ]

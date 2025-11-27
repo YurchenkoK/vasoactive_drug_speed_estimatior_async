@@ -427,6 +427,86 @@ class RedisUserClient:
             bool: True if user exists, False otherwise
         """
         return self.redis_client.exists(f'user:{username}') == 1
+    
+    def create_token(self, username: str) -> str:
+        """
+        Create authentication token for user
+        
+        Args:
+            username: User's username
+            
+        Returns:
+            str: Authentication token
+        """
+        # Generate secure token
+        token = secrets.token_hex(32)
+        
+        # Store token with 24 hour expiration
+        token_key = f'token:{token}'
+        self.redis_client.setex(token_key, 86400, username)
+        
+        # Also store in user's token set for revocation
+        user_tokens_key = f'user:{username}:tokens'
+        self.redis_client.sadd(user_tokens_key, token)
+        self.redis_client.expire(user_tokens_key, 86400)
+        
+        return token
+    
+    def get_user_by_token(self, token: str) -> str:
+        """
+        Get username by authentication token
+        
+        Args:
+            token: Authentication token
+            
+        Returns:
+            str: Username or None if token is invalid
+        """
+        token_key = f'token:{token}'
+        username = self.redis_client.get(token_key)
+        return username
+    
+    def revoke_token(self, token: str) -> bool:
+        """
+        Revoke authentication token
+        
+        Args:
+            token: Token to revoke
+            
+        Returns:
+            bool: True if token was revoked
+        """
+        # Get username first
+        username = self.get_user_by_token(token)
+        
+        if username:
+            # Remove from user's token set
+            user_tokens_key = f'user:{username}:tokens'
+            self.redis_client.srem(user_tokens_key, token)
+        
+        # Delete token
+        token_key = f'token:{token}'
+        return self.redis_client.delete(token_key) > 0
+    
+    def revoke_all_user_tokens(self, username: str) -> int:
+        """
+        Revoke all tokens for a user
+        
+        Args:
+            username: User's username
+            
+        Returns:
+            int: Number of tokens revoked
+        """
+        user_tokens_key = f'user:{username}:tokens'
+        tokens = self.redis_client.smembers(user_tokens_key)
+        
+        count = 0
+        for token in tokens:
+            if self.revoke_token(token):
+                count += 1
+        
+        return count
 
 
 # Global instance

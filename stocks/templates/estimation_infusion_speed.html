@@ -26,6 +26,8 @@
             const drugId = input.getAttribute('data-drug-id');
             const newVolume = input.value;
             
+            const card = input.closest('.result-card');
+            
             fetch(`/api/orders/${orderId}/drugs/${drugId}/`, {
                 method: 'PUT',
                 headers: {
@@ -45,7 +47,14 @@
             })
             .then(data => {
                 console.log('Объём ампулы обновлен:', data);
-                location.reload();
+                
+                // Обновляем скорость инфузии без перезагрузки страницы
+                if (data.infusion_speed) {
+                    const speedElement = card.querySelector('.spec-value-result');
+                    if (speedElement) {
+                        speedElement.textContent = data.infusion_speed + ' мг/кг/ч';
+                    }
+                }
             })
             .catch(error => {
                 console.error('Ошибка:', error);
@@ -79,20 +88,23 @@
                         <input type="number" name="patient_weight" step="0.01" min="0.01" class="calc-input" value="{{ data.estimation_params.patient_weight }}">
                     </div>
                     <div class="form-row button-row">
-                        <button type="submit" class="search-button button-flex">
-                            Рассчитать скорость инфузии
-                        </button>
-                        {% if data.order_id %}
-                            {% if data.estimation_params.ampoules and data.estimation_params.solvent_volume and data.estimation_params.patient_weight %}
+                        {% if data.has_infusion_speeds %}
+                            <!-- Если скорости рассчитаны, показываем только кнопку Завершить -->
                             <button type="button" class="search-button button-flex button-success" 
+                                    style="width: 100%; max-width: 600px;"
                                     onclick="document.getElementById('complete-form-{{ data.order_id }}').submit();">
                                 Завершить заявку
                             </button>
-                            {% else %}
-                            <button type="button" class="search-button button-flex button-danger" 
-                                    onclick="document.getElementById('delete-form-{{ data.order_id }}').submit();">
-                                Удалить заявку
+                        {% else %}
+                            <!-- Если скоростей нет, показываем кнопки расчёта и удаления -->
+                            <button type="submit" class="search-button button-flex">
+                                Рассчитать скорость инфузии
                             </button>
+                            {% if data.order_id %}
+                                <button type="button" class="search-button button-flex button-danger" 
+                                        onclick="document.getElementById('delete-form-{{ data.order_id }}').submit();">
+                                    Удалить заявку
+                                </button>
                             {% endif %}
                         {% endif %}
                     </div>

@@ -1,20 +1,13 @@
 _type: export
 __export_format: 4
-__export_date: 2025-11-03T20:00:00.000Z
+__export_date: 2025-11-27T20:00:00.000Z
 __export_source: insomnia.desktop.app:v2023.5.8
 resources:
   - _id: wrk_vasoactive_drugs
     _type: workspace
     name: Vasoactive Drugs API
-    description: API для управления вазоактивными препаратами и заявками
+    description: API для управления вазоактивными препаратами и заявками с Redis аутентификацией
     
-  - _id: env_base
-    parentId: wrk_vasoactive_drugs
-    _type: environment
-    name: Base Environment
-    data:
-      base_url: http://localhost:8000
-      
   - _id: fld_drugs
     parentId: wrk_vasoactive_drugs
     _type: request_group
@@ -40,7 +33,7 @@ resources:
     _type: request
     name: POST добавление изображения
     method: POST
-    url: "http://localhost:8000/api/drugs/1/add-image/"
+    url: http://localhost:8000/api/drugs/1/add-image/
     body:
       mimeType: multipart/form-data
     
@@ -49,21 +42,21 @@ resources:
     _type: request
     name: POST добавления в заявку-черновик
     method: POST
-    url: "http://localhost:8000/api/drugs/1/add-to-order/"
+    url: http://localhost:8000/api/drugs/1/add-to-order/
     
   - _id: req_drug_delete
     parentId: fld_drugs
     _type: request
     name: DELETE удаление
     method: DELETE
-    url: "http://localhost:8000/api/drugs/1/"
+    url: http://localhost:8000/api/drugs/1/
         
   - _id: req_drug_update
     parentId: fld_drugs
     _type: request
     name: PUT изменение
     method: PUT
-    url: "http://localhost:8000/api/drugs/1/"
+    url: http://localhost:8000/api/drugs/1/
     headers:
       - name: Content-Type
         value: application/json
@@ -80,7 +73,7 @@ resources:
     _type: request
     name: POST добавление (без изображения)
     method: POST
-    url: "http://localhost:8000/api/drugs/"
+    url: http://localhost:8000/api/drugs/
     headers:
       - name: Content-Type
         value: application/json
@@ -100,49 +93,49 @@ resources:
     _type: request
     name: GET одна запись
     method: GET
-    url: "http://localhost:8000/api/drugs/1/"
+    url: http://localhost:8000/api/drugs/1/
     
   - _id: req_drugs_list
     parentId: fld_drugs
     _type: request
     name: GET список с фильтрацией
     method: GET
-    url: "http://localhost:8000/api/drugs/?name=Нитроглицерин"
+    url: http://localhost:8000/api/drugs/?name=Нитроглицерин
     
   - _id: req_order_delete
     parentId: fld_orders
     _type: request
     name: DELETE удаление
     method: DELETE
-    url: "http://localhost:8000/api/orders/1/"
+    url: http://localhost:8000/api/orders/1/
     
   - _id: req_order_reject
     parentId: fld_orders
     _type: request
     name: PUT отклонить модератором
     method: PUT
-    url: "http://localhost:8000/api/orders/1/reject/"
+    url: http://localhost:8000/api/orders/1/reject/
     
   - _id: req_order_complete
     parentId: fld_orders
     _type: request
     name: PUT завершить модератором
     method: PUT
-    url: "http://localhost:8000/api/orders/1/complete/"
+    url: http://localhost:8000/api/orders/1/complete/
     
   - _id: req_order_form
     parentId: fld_orders
     _type: request
     name: PUT сформировать создателем
     method: PUT
-    url: "http://localhost:8000/api/orders/1/form/"
+    url: http://localhost:8000/api/orders/1/form/
     
   - _id: req_order_update
     parentId: fld_orders
     _type: request
     name: PUT изменения полей заявки по теме
     method: PUT
-    url: "http://localhost:8000/api/orders/1/"
+    url: http://localhost:8000/api/orders/1/
     headers:
       - name: Content-Type
         value: application/json
@@ -160,28 +153,28 @@ resources:
     _type: request
     name: GET одна запись
     method: GET
-    url: "http://localhost:8000/api/orders/1/"
+    url: http://localhost:8000/api/orders/1/
     
   - _id: req_orders_list
     parentId: fld_orders
     _type: request
     name: GET список с фильтрацией
     method: GET
-    url: "http://localhost:8000/api/orders/?status=FORMED&formation_date_from=2025-01-01&formation_date_to=2025-12-31"
+    url: http://localhost:8000/api/orders/?status=FORMED&formation_date_from=2025-01-01&formation_date_to=2025-12-31
     
   - _id: req_cart_icon
     parentId: fld_orders
     _type: request
     name: GET иконки корзины
     method: GET
-    url: "http://localhost:8000/api/orders/cart/"
+    url: http://localhost:8000/api/orders/cart/
     
   - _id: req_drug_in_order_update
     parentId: fld_mm
     _type: request
     name: PUT изменение объёма ампулы в м-м
     method: PUT
-    url: "http://localhost:8000/api/orders/1/drugs/1/"
+    url: http://localhost:8000/api/orders/1/drugs/1/
     headers:
       - name: Content-Type
         value: application/json
@@ -190,7 +183,7 @@ resources:
       text: |-
         {
           "ampoule_volume": "2.50",
-          "drug_rate": "5.0"
+          "infusion_speed": "5.0"
         }
     
   - _id: req_drug_in_order_delete
@@ -198,14 +191,14 @@ resources:
     _type: request
     name: DELETE удаление из заявки
     method: DELETE
-    url: "http://localhost:8000/api/orders/1/drugs/1/"
+    url: http://localhost:8000/api/orders/1/drugs/1/
         
   - _id: req_user_register
     parentId: fld_users
     _type: request
     name: POST регистрация (Redis)
     method: POST
-    url: "http://localhost:8000/api/users/register/"
+    url: http://localhost:8000/api/users/register/
     headers:
       - name: Content-Type
         value: application/json
@@ -225,14 +218,14 @@ resources:
     _type: request
     name: GET профиля пользователя (Redis)
     method: GET
-    url: "http://localhost:8000/api/users/profile/1/"
+    url: http://localhost:8000/api/users/profile/1/
     
   - _id: req_user_profile_put
     parentId: fld_users
     _type: request
     name: PUT обновление профиля (Redis)
     method: PUT
-    url: "http://localhost:8000/api/users/profile/1/"
+    url: http://localhost:8000/api/users/profile/1/
     headers:
       - name: Content-Type
         value: application/json
@@ -250,7 +243,7 @@ resources:
     _type: request
     name: POST аутентификация (Redis)
     method: POST
-    url: "http://localhost:8000/api/users/login/"
+    url: http://localhost:8000/api/users/login/
     headers:
       - name: Content-Type
         value: application/json
@@ -267,17 +260,18 @@ resources:
     _type: request
     name: POST деавторизация (Redis)
     method: POST
-    url: "http://localhost:8000/api/users/logout/"
+    url: http://localhost:8000/api/users/logout/
     
   - _id: req_user_me
     parentId: fld_users
     _type: request
     name: GET текущий пользователь (Redis)
     method: GET
-    url: "http://localhost:8000/api/users/me/"
-
-
-
-
-
-
+    url: http://localhost:8000/api/users/me/
+  
+  - _id: req_user_token_refresh
+    parentId: fld_users
+    _type: request
+    name: POST обновление токена (Redis)
+    method: POST
+    url: http://localhost:8000/api/users/token/refresh/

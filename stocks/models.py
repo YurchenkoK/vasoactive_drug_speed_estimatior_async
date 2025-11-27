@@ -1,5 +1,4 @@
 from django.db import models
-from django.contrib.auth.models import User
 
 
 class Drug(models.Model):
@@ -31,8 +30,8 @@ class Order(models.Model):
     creation_datetime = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
     formation_datetime = models.DateTimeField(blank=True, null=True, verbose_name="Дата формирования")
     completion_datetime = models.DateTimeField(blank=True, null=True, verbose_name="Дата завершения")
-    creator = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='created_orders', verbose_name="Создатель")
-    moderator = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='moderated_orders', blank=True, null=True, verbose_name="Модератор")
+    creator_username = models.CharField(max_length=150, verbose_name="Создатель (username)")
+    moderator_username = models.CharField(max_length=150, blank=True, null=True, verbose_name="Модератор (username)")
     ampoules_count = models.IntegerField(blank=True, null=True, verbose_name="Количество ампул")
     solvent_volume = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, verbose_name="Объём растворителя (мл)")
     patient_weight = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, verbose_name="Масса пациента (кг)")
@@ -47,8 +46,8 @@ class Order(models.Model):
 
 
 class DrugInOrder(models.Model):
-    order = models.ForeignKey(Order, on_delete=models.DO_NOTHING, verbose_name="Заявка")
-    drug = models.ForeignKey(Drug, on_delete=models.DO_NOTHING, verbose_name="Препарат")
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, verbose_name="Заявка")
+    drug = models.ForeignKey(Drug, on_delete=models.CASCADE, verbose_name="Препарат")
     ampoule_volume = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Объём ампулы (мл)")
     infusion_speed = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Скорость введения (мг/кг/час)")
     

@@ -1,4 +1,3 @@
-from django.contrib import admin
 from django.urls import path, include
 from stocks import views
 from rest_framework import routers, permissions
@@ -20,7 +19,7 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    # Removed admin - using Redis for users
     
     path('', views.search, name='search'),
     path('vasoactive_drug/<int:drug_id>/', views.vasoactive_drug_detail, name='vasoactive_drug_detail'),
@@ -52,6 +51,7 @@ urlpatterns = [
    path('api/users/login/', views.user_login, name='user-login'),
    path('api/users/logout/', views.user_logout, name='user-logout'),
    path('api/users/me/', views.get_current_user, name='user-current'),
+   path('api/users/token/refresh/', views.refresh_token, name='token-refresh'),
     
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('swagger<format>/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
