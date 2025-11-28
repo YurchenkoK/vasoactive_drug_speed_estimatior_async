@@ -3,16 +3,21 @@ from stocks.redis_client import redis_user_client
 
 
 def get_redis_user(request):
-    if hasattr(request, 'user') and request.user and request.user.is_authenticated:
-        user = request.user
-        return {
-            'id': user.id,
-            'username': user.username,
-            'email': user.email,
-            'is_staff': user.is_staff,
-            'is_superuser': user.is_superuser,
-            'role': user.role if hasattr(user, 'role') else 'USER'
-        }
+    # If middleware or DRF authentication placed a dict-like user (from Redis), return it
+    if hasattr(request, 'user') and request.user:
+        if isinstance(request.user, dict):
+            return request.user
+        # Normal Django-like user object
+        if getattr(request.user, 'is_authenticated', False):
+            user = request.user
+            return {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'is_staff': user.is_staff,
+                'is_superuser': user.is_superuser,
+                'role': user.role if hasattr(user, 'role') else 'USER'
+            }
     
     session_id = request.COOKIES.get('redis_session_id')
     if session_id:
@@ -23,19 +28,23 @@ def get_redis_user(request):
 
 class IsAuthenticated(permissions.BasePermission):
     def has_permission(self, request, view):
-        if hasattr(request, 'user') and request.user and request.user.is_authenticated:
+        user = getattr(request, 'user', None)
+        # dict user (from Redis auth) -> authenticated
+        if isinstance(user, dict):
             return True
-        
-        if hasattr(request, 'user') and request.user:
-            return isinstance(request.user, dict)
-        
-        user = get_redis_user(request)
-        return user is not None
+        # Django user object
+        if getattr(user, 'is_authenticated', False):
+            return True
+
+        # Fallback to Redis session lookup
+        redis_user = get_redis_user(request)
+        return redis_user is not None
 
 
 class IsManager(permissions.BasePermission):
     def has_permission(self, request, view):
-        if hasattr(request, 'user') and request.user and isinstance(request.user, dict):
+        user = None
+        if hasattr(request, 'user') and isinstance(request.user, dict):
             user = request.user
         else:
             user = get_redis_user(request)
@@ -47,7 +56,8 @@ class IsManager(permissions.BasePermission):
 
 class IsAdmin(permissions.BasePermission):
     def has_permission(self, request, view):
-        if hasattr(request, 'user') and request.user and isinstance(request.user, dict):
+        user = None
+        if hasattr(request, 'user') and isinstance(request.user, dict):
             user = request.user
         else:
             user = get_redis_user(request)

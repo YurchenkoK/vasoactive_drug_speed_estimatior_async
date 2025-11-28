@@ -34,26 +34,23 @@ class RedisUserMiddleware:
         self.get_response = get_response
     
     def __call__(self, request):
-        token = None
+        user_data = None
         
         auth_header = request.headers.get('Authorization', '')
-        if auth_header.startswith('Bearer '):
+        if auth_header.startswith('Token '):
             token = auth_header.split(' ')[1]
+            username = redis_user_client.get_user_by_token(token)
+            if username:
+                user_data = redis_user_client.get_user(username)
         
-        if not token:
-            token = request.COOKIES.get('auth_token')
+        if not user_data:
+            session_id = request.COOKIES.get('redis_session_id')
+            if session_id:
+                user_data = redis_user_client.get_session(session_id)
         
-        if token:
-            user_data = redis_user_client.get_user_by_token(token)
-            
-            if user_data:
-                request.user = SimpleUser(
-                    username=user_data['username'],
-                    role=user_data.get('role', 'user'),
-                    is_authenticated=True
-                )
-            else:
-                request.user = AnonymousUser()
+        if user_data:
+            # store Redis user data as a dict on request.user for compatibility
+            request.user = user_data
         else:
             request.user = AnonymousUser()
         

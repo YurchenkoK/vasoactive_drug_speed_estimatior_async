@@ -329,7 +329,7 @@ def cart_icon(request):
     
     username = redis_user['username']
     try:
-        order = Order.objects.get(creator=request.user, status=Order.OrderStatus.DRAFT)
+        order = Order.objects.get(creator=username, status=Order.OrderStatus.DRAFT)
         count = DrugInOrder.objects.filter(order=order).count()
         return Response({"order_id": order.id, "count": count})
     except Order.DoesNotExist:
@@ -361,7 +361,7 @@ class OrderList(APIView):
                 status__in=[Order.OrderStatus.DELETED, Order.OrderStatus.DRAFT]
             )
         else:
-            orders = Order.objects.filter(creator=request.user).exclude(
+            orders = Order.objects.filter(creator=username).exclude(
                 status__in=[Order.OrderStatus.DELETED, Order.OrderStatus.DRAFT]
             )
         
@@ -697,7 +697,7 @@ def add_drug_to_order(request, pk):
     drug = get_object_or_404(Drug, pk=pk, is_active=True)
     username = redis_user['username']
     order, created = Order.objects.get_or_create(
-        creator=request.user,
+        creator=username,
         status=Order.OrderStatus.DRAFT,
         defaults={'creation_datetime': timezone.now()}
     )
@@ -735,9 +735,9 @@ def search(request):
         if redis_user:
             username = redis_user['username']
         else:
-            username = 'anonymous'
+            username = 'AnonymousUser'
         
-        draft_order = Order.objects.filter(creator=request.user, status=Order.OrderStatus.DRAFT).first()
+        draft_order = Order.objects.filter(creator=username, status=Order.OrderStatus.DRAFT).first()
         if draft_order:
             estimation_count = DrugInOrder.objects.filter(order=draft_order).count()
             order_id = draft_order.id
@@ -767,9 +767,9 @@ def vasoactive_drug_detail(request, drug_id):
         if redis_user:
             username = redis_user['username']
         else:
-            username = 'anonymous'
+            username = 'AnonymousUser'
         
-        draft_order = Order.objects.filter(creator=request.user, status=Order.OrderStatus.DRAFT).first()
+        draft_order = Order.objects.filter(creator=username, status=Order.OrderStatus.DRAFT).first()
         if draft_order:
             estimation_count = DrugInOrder.objects.filter(order=draft_order).count()
             order_id = draft_order.id
@@ -787,12 +787,12 @@ def add_to_order_html(request, drug_id):
     
     redis_user = get_redis_user(request)
     if not redis_user:
-        username = 'anonymous'
+        username = 'AnonymousUser'
     else:
         username = redis_user['username']
     
     draft_order, created = Order.objects.get_or_create(
-        creator=request.user,
+        creator=username,
         status=Order.OrderStatus.DRAFT
     )
     
@@ -807,18 +807,18 @@ def add_to_order_html(request, drug_id):
 def estimation_infusion_speed(request, order_id=None):
     redis_user = get_redis_user(request)
     if not redis_user:
-        username = 'anonymous'
+        username = 'AnonymousUser'
     else:
         username = redis_user['username']
     
     if order_id:
-        order = get_object_or_404(Order, id=order_id, creator=request.user)
+        order = get_object_or_404(Order, id=order_id, creator=username)
         if order.status == Order.OrderStatus.DELETED:
             raise Http404("Заявка удалена")
         draft_order = order
     else:
         draft_order = Order.objects.filter(
-            creator=request.user, 
+            creator=username, 
             status__in=[Order.OrderStatus.DRAFT, Order.OrderStatus.FORMED]
         ).first()
     
