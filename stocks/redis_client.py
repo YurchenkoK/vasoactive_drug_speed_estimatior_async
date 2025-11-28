@@ -6,10 +6,6 @@ from django.conf import settings
 
 
 class RedisUserClient:
-    """
-    Redis client for user management using Lua scripts.
-    Stores users in Redis hashes and manages authentication.
-    """
     
     def __init__(self):
         redis_config = {
@@ -21,20 +17,16 @@ class RedisUserClient:
             'socket_timeout': 5,
         }
         
-        # Add password if configured
         redis_password = getattr(settings, 'REDIS_PASSWORD', None)
         if redis_password:
             redis_config['password'] = redis_password
         
-        # Add username if configured (for Redis ACL)
         redis_username = getattr(settings, 'REDIS_USERNAME', None)
         if redis_username:
             redis_config['username'] = redis_username
         
-        # Try multiple connection attempts with different auth methods
         connection_attempts = []
         
-        # Attempt 1: With configured credentials
         try:
             self.redis_client = redis.Redis(**redis_config)
             self.redis_client.ping()
@@ -47,7 +39,6 @@ class RedisUserClient:
             print(f"✗ Ошибка подключения к Redis: {e}")
             raise
         
-        # Attempt 2: Try common passwords if no password configured
         if not redis_password:
             common_passwords = ['', 'redis', 'root', 'rootroot', 'password', 'admin']
             for pwd in common_passwords:
@@ -69,7 +60,6 @@ class RedisUserClient:
                     connection_attempts.append(f"Пароль '{pwd}': не подошел")
                     continue
         
-        # If all attempts failed
         print("\n✗ Не удалось подключиться к Redis")
         print("\nПопробованные варианты:")
         for attempt in connection_attempts[:3]:
@@ -81,32 +71,24 @@ class RedisUserClient:
         print("  3. Или см. REDIS_AUTH_TROUBLESHOOTING.md")
         raise redis.exceptions.AuthenticationError("Не удалось аутентифицироваться в Redis")
         
-        # Load Lua scripts
         self._load_lua_scripts()
     
     def _load_lua_scripts(self):
-        """Load and register Lua scripts in Redis"""
-        
-        # Script for user registration
         self.register_script = self.redis_client.register_script("""
             local username = ARGV[1]
             local user_data = ARGV[2]
             
-            -- Check if user exists
             local exists = redis.call('EXISTS', 'user:' .. username)
             if exists == 1 then
                 return nil
             end
             
-            -- Get next user ID
             local user_id = redis.call('INCR', 'user:id:counter')
             
-            -- Parse user data
             local data = cjson.decode(user_data)
             data['id'] = user_id
             data['username'] = username
             
-            -- Save user
             redis.call('HMSET', 'user:' .. username, 
                 'id', user_id,
                 'username', username,
@@ -118,30 +100,24 @@ class RedisUserClient:
                 'is_superuser', data['is_superuser'] or '0'
             )
             
-            -- Add to users set
             redis.call('SADD', 'users:all', username)
             
-            -- Map user ID to username
             redis.call('SET', 'user:id:' .. user_id, username)
             
             return user_id
         """)
         
-        # Script for user authentication
         self.authenticate_script = self.redis_client.register_script("""
             local username = ARGV[1]
             local password = ARGV[2]
             
-            -- Check if user exists
             local exists = redis.call('EXISTS', 'user:' .. username)
             if exists == 0 then
                 return nil
             end
             
-            -- Get stored password
             local stored_password = redis.call('HGET', 'user:' .. username, 'password')
             
-            -- Compare passwords
             if stored_password == password then
                 return redis.call('HGETALL', 'user:' .. username)
             else
@@ -149,7 +125,6 @@ class RedisUserClient:
             end
         """)
         
-        # Script for getting user by username
         self.get_user_script = self.redis_client.register_script("""
             local username = ARGV[1]
             
@@ -161,11 +136,9 @@ class RedisUserClient:
             return redis.call('HGETALL', 'user:' .. username)
         """)
         
-        # Script for getting user by ID
         self.get_user_by_id_script = self.redis_client.register_script("""
             local user_id = ARGV[1]
             
-            -- Get username from ID
             local username = redis.call('GET', 'user:id:' .. user_id)
             if not username then
                 return nil
@@ -174,7 +147,6 @@ class RedisUserClient:
             return redis.call('HGETALL', 'user:' .. username)
         """)
         
-        # Script for updating user
         self.update_user_script = self.redis_client.register_script("""
             local username = ARGV[1]
             local updates = ARGV[2]
@@ -201,7 +173,6 @@ class RedisUserClient:
             return redis.call('HGETALL', 'user:' .. username)
         """)
         
-        # Script for creating session
         self.create_session_script = self.redis_client.register_script("""
             local session_id = ARGV[1]
             local username = ARGV[2]
@@ -213,7 +184,6 @@ class RedisUserClient:
             return 1
         """)
         
-        # Script for getting session
         self.get_session_script = self.redis_client.register_script("""
             local session_id = ARGV[1]
             
@@ -225,7 +195,6 @@ class RedisUserClient:
             return redis.call('HGETALL', 'user:' .. username)
         """)
         
-        # Script for deleting session
         self.delete_session_script = self.redis_client.register_script("""
             local session_id = ARGV[1]
             
@@ -240,16 +209,13 @@ class RedisUserClient:
     
     @staticmethod
     def hash_password(password: str) -> str:
-        """Hash password using SHA256"""
         return hashlib.sha256(password.encode()).hexdigest()
     
     @staticmethod
     def generate_session_id() -> str:
-        """Generate a secure session ID"""
         return secrets.token_urlsafe(32)
     
     def _hash_to_dict(self, hash_data):
-        """Convert Redis hash list to dictionary"""
         if not hash_data:
             return None
         
@@ -258,10 +224,8 @@ class RedisUserClient:
             key = hash_data[i]
             value = hash_data[i + 1]
             
-            # Convert boolean fields
             if key in ['is_staff', 'is_superuser']:
                 result[key] = value == '1' or value == 'True'
-            # Convert ID to int
             elif key == 'id':
                 result[key] = int(value)
             else:
@@ -272,21 +236,6 @@ class RedisUserClient:
     def register_user(self, username: str, password: str, first_name: str = '', 
                      last_name: str = '', email: str = '', is_staff: bool = False,
                      is_superuser: bool = False) -> dict:
-        """
-        Register a new user in Redis
-        
-        Args:
-            username: User's username
-            password: User's plain text password (will be hashed)
-            first_name: User's first name
-            last_name: User's last name
-            email: User's email
-            is_staff: Whether user has staff privileges
-            is_superuser: Whether user has superuser privileges
-            
-        Returns:
-            dict: User data if successful, None if user already exists
-        """
         hashed_password = self.hash_password(password)
         
         user_data = {
@@ -306,58 +255,19 @@ class RedisUserClient:
         return self.get_user(username)
     
     def authenticate(self, username: str, password: str) -> dict:
-        """
-        Authenticate a user
-        
-        Args:
-            username: User's username
-            password: User's plain text password
-            
-        Returns:
-            dict: User data if authentication successful, None otherwise
-        """
         hashed_password = self.hash_password(password)
         user_data = self.authenticate_script(args=[username, hashed_password])
         return self._hash_to_dict(user_data)
     
     def get_user(self, username: str) -> dict:
-        """
-        Get user by username
-        
-        Args:
-            username: User's username
-            
-        Returns:
-            dict: User data if found, None otherwise
-        """
         user_data = self.get_user_script(args=[username])
         return self._hash_to_dict(user_data)
     
     def get_user_by_id(self, user_id: int) -> dict:
-        """
-        Get user by ID
-        
-        Args:
-            user_id: User's ID
-            
-        Returns:
-            dict: User data if found, None otherwise
-        """
         user_data = self.get_user_by_id_script(args=[str(user_id)])
         return self._hash_to_dict(user_data)
     
     def update_user(self, username: str, **kwargs) -> dict:
-        """
-        Update user information
-        
-        Args:
-            username: User's username
-            **kwargs: Fields to update (first_name, last_name, email)
-            
-        Returns:
-            dict: Updated user data
-        """
-        # Filter out password and protected fields
         allowed_fields = ['first_name', 'last_name', 'email']
         updates = {k: v for k, v in kwargs.items() if k in allowed_fields}
         
@@ -365,49 +275,21 @@ class RedisUserClient:
         return self._hash_to_dict(user_data)
     
     def create_session(self, username: str, ttl: int = 86400) -> str:
-        """
-        Create a session for a user
-        
-        Args:
-            username: User's username
-            ttl: Time to live in seconds (default: 24 hours)
-            
-        Returns:
-            str: Session ID
-        """
         session_id = self.generate_session_id()
         self.create_session_script(args=[session_id, username, str(ttl)])
         return session_id
     
     def get_session(self, session_id: str) -> dict:
-        """
-        Get user data from session ID
-        
-        Args:
-            session_id: Session ID
-            
-        Returns:
-            dict: User data if session exists, None otherwise
-        """
         user_data = self.get_session_script(args=[session_id])
         return self._hash_to_dict(user_data)
     
     def delete_session(self, session_id: str):
-        """
-        Delete a session
-        
-        Args:
-            session_id: Session ID
-        """
         self.delete_session_script(args=[session_id])
     
+    def get_user_by_token(self, token: str) -> dict:
+        return self.get_session(token)
+    
     def get_all_users(self) -> list:
-        """
-        Get all registered users
-        
-        Returns:
-            list: List of all user dictionaries
-        """
         usernames = self.redis_client.smembers('users:all')
         users = []
         for username in usernames:
@@ -417,35 +299,14 @@ class RedisUserClient:
         return users
     
     def user_exists(self, username: str) -> bool:
-        """
-        Check if a user exists
-        
-        Args:
-            username: User's username
-            
-        Returns:
-            bool: True if user exists, False otherwise
-        """
         return self.redis_client.exists(f'user:{username}') == 1
     
     def create_token(self, username: str) -> str:
-        """
-        Create authentication token for user
-        
-        Args:
-            username: User's username
-            
-        Returns:
-            str: Authentication token
-        """
-        # Generate secure token
         token = secrets.token_hex(32)
         
-        # Store token with 24 hour expiration
         token_key = f'token:{token}'
         self.redis_client.setex(token_key, 86400, username)
         
-        # Also store in user's token set for revocation
         user_tokens_key = f'user:{username}:tokens'
         self.redis_client.sadd(user_tokens_key, token)
         self.redis_client.expire(user_tokens_key, 86400)
@@ -453,51 +314,21 @@ class RedisUserClient:
         return token
     
     def get_user_by_token(self, token: str) -> str:
-        """
-        Get username by authentication token
-        
-        Args:
-            token: Authentication token
-            
-        Returns:
-            str: Username or None if token is invalid
-        """
         token_key = f'token:{token}'
         username = self.redis_client.get(token_key)
         return username
     
     def revoke_token(self, token: str) -> bool:
-        """
-        Revoke authentication token
-        
-        Args:
-            token: Token to revoke
-            
-        Returns:
-            bool: True if token was revoked
-        """
-        # Get username first
         username = self.get_user_by_token(token)
         
         if username:
-            # Remove from user's token set
             user_tokens_key = f'user:{username}:tokens'
             self.redis_client.srem(user_tokens_key, token)
         
-        # Delete token
         token_key = f'token:{token}'
         return self.redis_client.delete(token_key) > 0
     
     def revoke_all_user_tokens(self, username: str) -> int:
-        """
-        Revoke all tokens for a user
-        
-        Args:
-            username: User's username
-            
-        Returns:
-            int: Number of tokens revoked
-        """
         user_tokens_key = f'user:{username}:tokens'
         tokens = self.redis_client.smembers(user_tokens_key)
         
@@ -509,5 +340,4 @@ class RedisUserClient:
         return count
 
 
-# Global instance
 redis_user_client = RedisUserClient()

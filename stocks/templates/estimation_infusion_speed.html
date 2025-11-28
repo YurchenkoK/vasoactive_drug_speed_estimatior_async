@@ -89,14 +89,12 @@
                     </div>
                     <div class="form-row button-row">
                         {% if data.has_infusion_speeds %}
-                            <!-- Если скорости рассчитаны, показываем только кнопку Завершить -->
                             <button type="button" class="search-button button-flex button-success" 
                                     style="width: 100%; max-width: 600px;"
                                     onclick="document.getElementById('complete-form-{{ data.order_id }}').submit();">
                                 Завершить заявку
                             </button>
                         {% else %}
-                            <!-- Если скоростей нет, показываем кнопки расчёта и удаления -->
                             <button type="submit" class="search-button button-flex">
                                 Рассчитать скорость инфузии
                             </button>
@@ -158,10 +156,8 @@
             {% for item in data.estimation_items %}
                 <div class="result-card">
                     <div class="drug-info">
-                        {% if item.image|slice:":4" == "http" %}
+                        {% if item.image %}
                             <img src="{{ item.image }}" alt="{{ item.name }}" class="drug-image-result">
-                        {% else %}
-                            <img src="{% static item.image %}" alt="{{ item.name }}" class="drug-image-result">
                         {% endif %}
                         <h4 class="drug-name-result">{{ item.name }}</h4>
                     </div>

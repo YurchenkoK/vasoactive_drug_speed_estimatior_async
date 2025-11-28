@@ -1,4 +1,6 @@
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 from stocks import views
 from rest_framework import routers, permissions
 from drf_yasg.views import get_schema_view
@@ -19,8 +21,6 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
-    # Removed admin - using Redis for users
-    
     path('', views.search, name='search'),
     path('vasoactive_drug/<int:drug_id>/', views.vasoactive_drug_detail, name='vasoactive_drug_detail'),
     path('add_to_order/<int:drug_id>/', views.add_to_order_html, name='add_to_order'),
@@ -57,3 +57,6 @@ urlpatterns = [
     path('swagger<format>/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     path('swagger.json', schema_view.without_ui(cache_timeout=0), name='schema-json-file'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.BASE_DIR / 'stocks' / 'static')

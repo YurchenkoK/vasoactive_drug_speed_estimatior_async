@@ -23,10 +23,8 @@
         <div class="drugs-grid">
             {% for drug in data.drugs %}
                 <div class="drug-card">
-                    {% if drug.image|slice:":4" == "http" %}
+                    {% if drug.image %}
                         <img src="{{ drug.image }}" alt="{{ drug.name }}" class="drug-image">
-                    {% else %}
-                        <img src="{% static drug.image %}" alt="{{ drug.name }}" class="drug-image">
                     {% endif %}
                     <h3 class="drug-name">{{ drug.name }}</h3>
                     <p class="drug-concentration">Концентрация в амп.: {{ drug.concentration }}</p>

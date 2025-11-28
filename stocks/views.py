@@ -1,4 +1,3 @@
-
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404, render, redirect
 from rest_framework import status
@@ -12,9 +11,7 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
 from stocks.serializers import (
-    DrugSerializer, FullDrugSerializer, OrderSerializer, 
-    FullOrderSerializer, DrugInOrderSerializer, UserSerializer, 
-    UserRegistrationSerializer, UserLoginSerializer
+    UserSerializer, DrugSerializer, OrderSerializer, DrugInOrderSerializer
 )
 from stocks.models import Drug, Order, DrugInOrder
 from stocks.redis_client import redis_user_client
@@ -87,39 +84,62 @@ class UserRegistration(APIView):
     authentication_classes = []
     
     @swagger_auto_schema(
-        request_body=UserRegistrationSerializer,
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['username', 'password'],
+            properties={
+                'username': openapi.Schema(type=openapi.TYPE_STRING, description='Username'),
+                'password': openapi.Schema(type=openapi.TYPE_STRING, description='Password'),
+                'email': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_EMAIL, description='Email (optional)'),
+                'first_name': openapi.Schema(type=openapi.TYPE_STRING, description='First name (optional)'),
+                'last_name': openapi.Schema(type=openapi.TYPE_STRING, description='Last name (optional)'),
+            },
+        ),
         responses={201: UserSerializer, 400: 'Bad Request'}
     )
     def post(self, request, format=None):
-        serializer = UserRegistrationSerializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.save()
-            if user is None:
-                return Response({
-                    "error": "Не удалось создать пользователя"
-                }, status=status.HTTP_400_BAD_REQUEST)
-            
-            # Create session for the new user
-            session_id = redis_user_client.create_session(user['username'])
-            
-            response = Response({
-                "id": user['id'],
-                "username": user['username'],
-                "message": "Пользователь успешно зарегистрирован"
-            }, status=status.HTTP_201_CREATED)
-            
-            # Create API token
-            token = redis_user_client.create_token(username)
-            
-            # Set session cookie
-            response.set_cookie('redis_session_id', session_id, 
-                              max_age=86400, httponly=True, samesite='Lax')
-            
-            # Add token to response for API clients
-            response.data['token'] = token
-            
-            return response
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        username = request.data.get('username')
+        password = request.data.get('password')
+        email = request.data.get('email', '')
+        first_name = request.data.get('first_name', '')
+        last_name = request.data.get('last_name', '')
+        
+        if not username or not password:
+            return Response({
+                "error": "Username and password are required"
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        user_data = redis_user_client.register_user(
+            username=username,
+            password=password,
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
+            is_staff=False,
+            is_superuser=False
+        )
+        
+        if user_data is None:
+            return Response({
+                "error": "User with this username already exists"
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        session_id = redis_user_client.create_session(username)
+        
+        response = Response({
+            "id": user_data['id'],
+            "username": user_data['username'],
+            "message": "Пользователь успешно зарегистрирован"
+        }, status=status.HTTP_201_CREATED)
+        
+        token = redis_user_client.create_token(username)
+        
+        response.set_cookie('redis_session_id', session_id, 
+                          max_age=86400, httponly=True, samesite='Lax')
+        
+        response.data['token'] = token
+        
+        return response
 
 
 class UserProfile(APIView):
@@ -127,7 +147,6 @@ class UserProfile(APIView):
     authentication_classes = []
     
     def _get_user_from_request(self, request):
-        """Get user from Redis session"""
         session_id = request.COOKIES.get('redis_session_id')
         if not session_id:
             return None
@@ -183,25 +202,31 @@ class UserProfile(APIView):
 
 @swagger_auto_schema(
     method='post',
-    request_body=UserLoginSerializer,
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['username', 'password'],
+        properties={
+            'username': openapi.Schema(type=openapi.TYPE_STRING, description='Username'),
+            'password': openapi.Schema(type=openapi.TYPE_STRING, description='Password'),
+        },
+    ),
     responses={200: UserSerializer, 400: 'Bad Request', 401: 'Unauthorized'}
 )
 @api_view(['POST'])
 @permission_classes([AllowAny])
 @authentication_classes([])
 def user_login(request):
-    serializer = UserLoginSerializer(data=request.data)
-    if not serializer.is_valid():
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    username = request.data.get('username')
+    password = request.data.get('password')
     
-    username = serializer.validated_data['username']
-    password = serializer.validated_data['password']
+    if not username or not password:
+        return Response({
+            "error": "Username and password are required"
+        }, status=status.HTTP_400_BAD_REQUEST)
     
-    # Authenticate with Redis
     user = redis_user_client.authenticate(username, password)
     
     if user is not None:
-        # Create session
         session_id = redis_user_client.create_session(username)
         
         response = Response({
@@ -215,7 +240,6 @@ def user_login(request):
             "message": "Успешная аутентификация"
         })
         
-        # Set session cookie
         response.set_cookie('redis_session_id', session_id, 
                           max_age=86400, httponly=True, samesite='Lax')
         
@@ -233,12 +257,10 @@ def user_login(request):
 @permission_classes([AllowAny])
 @authentication_classes([])
 def user_logout(request):
-    # Delete Redis session
     session_id = request.COOKIES.get('redis_session_id')
     if session_id:
         redis_user_client.delete_session(session_id)
     
-    # Revoke token if present
     auth_header = request.META.get('HTTP_AUTHORIZATION', '')
     if auth_header.startswith('Token '):
         token = auth_header.split(' ')[1]
@@ -262,10 +284,6 @@ def user_logout(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def refresh_token(request):
-    """
-    Получить новый API токен для текущего пользователя.
-    Можно вызвать с существующим токеном или cookie сессией.
-    """
     user = get_redis_user(request)
     if not user:
         return Response({"error": "Authentication required"}, status=status.HTTP_401_UNAUTHORIZED)
@@ -283,7 +301,6 @@ def refresh_token(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_current_user(request):
-    """Get current authenticated user (uses DRF authentication)"""
     user = get_redis_user(request)
     if not user:
         return Response({"error": "Требуется аутентификация"}, 
@@ -312,7 +329,7 @@ def cart_icon(request):
     
     username = redis_user['username']
     try:
-        order = Order.objects.get(creator_username=username, status=Order.OrderStatus.DRAFT)
+        order = Order.objects.get(creator=request.user, status=Order.OrderStatus.DRAFT)
         count = DrugInOrder.objects.filter(order=order).count()
         return Response({"order_id": order.id, "count": count})
     except Order.DoesNotExist:
@@ -320,11 +337,6 @@ def cart_icon(request):
 
 
 class OrderList(APIView):
-    """
-    Список заявок текущего пользователя
-    GET: только для аутентифицированных пользователей (свои заявки) или менеджеров (все заявки)
-    """
-    # Uses default authentication from settings (Token + Cookie)
     permission_classes = [IsAuthenticated]
     
     @swagger_auto_schema(
@@ -349,7 +361,7 @@ class OrderList(APIView):
                 status__in=[Order.OrderStatus.DELETED, Order.OrderStatus.DRAFT]
             )
         else:
-            orders = Order.objects.filter(creator_username=username).exclude(
+            orders = Order.objects.filter(creator=request.user).exclude(
                 status__in=[Order.OrderStatus.DELETED, Order.OrderStatus.DRAFT]
             )
         
@@ -370,18 +382,11 @@ class OrderList(APIView):
 
 
 class OrderDetail(APIView):
-    """
-    Детальная информация о заявке
-    GET: просмотр заявки
-    PUT: изменение полей заявки (только создатель в статусе DRAFT)
-    DELETE: логическое удаление заявки (только создатель)
-    """
-    # Uses default authentication from settings (Token + Cookie)
     permission_classes = [IsAuthenticated]
     
     @swagger_auto_schema(
         operation_description="Получить детальную информацию о заявке. Доступно создателю и модераторам.",
-        responses={200: FullOrderSerializer, 403: 'Forbidden', 404: 'Not Found'}
+        responses={200: OrderSerializer, 403: 'Forbidden', 404: 'Not Found'}
     )
     def get(self, request, pk, format=None):
         redis_user = get_redis_user(request)
@@ -393,12 +398,12 @@ class OrderDetail(APIView):
         is_staff = redis_user.get('is_staff', False)
         is_superuser = redis_user.get('is_superuser', False)
         
-        if order.creator_username != username and not (is_staff or is_superuser):
+        if order.creator != request.user and not (is_staff or is_superuser):
             return Response({"error": "Нет доступа к этой заявке"}, 
                           status=status.HTTP_403_FORBIDDEN)
         if order.status == Order.OrderStatus.DELETED:
             return Response({"error": "Заявка удалена"}, status=status.HTTP_404_NOT_FOUND)
-        serializer = FullOrderSerializer(order)
+        serializer = OrderSerializer(order)
         return Response(serializer.data)
     
     @swagger_auto_schema(
@@ -413,7 +418,7 @@ class OrderDetail(APIView):
         order = get_object_or_404(Order, pk=pk)
         username = redis_user['username']
         
-        if order.creator_username != username:
+        if order.creator != request.user:
             return Response({"error": "Можно редактировать только свои заявки"}, 
                           status=status.HTTP_403_FORBIDDEN)
         if order.status != Order.OrderStatus.DRAFT:
@@ -433,7 +438,7 @@ class OrderDetail(APIView):
         order = get_object_or_404(Order, pk=pk)
         username = redis_user['username']
         
-        if order.creator_username != username:
+        if order.creator != request.user:
             return Response({"error": "Можно удалять только свои заявки"}, 
                           status=status.HTTP_403_FORBIDDEN)
         order.status = Order.OrderStatus.DELETED
@@ -443,7 +448,7 @@ class OrderDetail(APIView):
 
 @swagger_auto_schema(
     method='put',
-    responses={200: FullOrderSerializer, 400: 'Bad Request', 403: 'Forbidden'}
+    responses={200: OrderSerializer, 400: 'Bad Request', 403: 'Forbidden'}
 )
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
@@ -455,7 +460,7 @@ def form_order(request, pk):
     order = get_object_or_404(Order, pk=pk)
     username = redis_user['username']
     
-    if order.creator_username != username:
+    if order.creator != request.user:
         return Response({"error": "Можно формировать только свои заявки"}, 
                        status=status.HTTP_403_FORBIDDEN)
     if order.status != Order.OrderStatus.DRAFT:
@@ -470,13 +475,13 @@ def form_order(request, pk):
     order.status = Order.OrderStatus.FORMED
     order.formation_datetime = timezone.now()
     order.save()
-    serializer = FullOrderSerializer(order)
+    serializer = OrderSerializer(order)
     return Response(serializer.data)
 
 
 @swagger_auto_schema(
     method='put',
-    responses={200: FullOrderSerializer, 403: 'Forbidden'}
+    responses={200: OrderSerializer, 403: 'Forbidden'}
 )
 @api_view(['PUT'])
 @permission_classes([IsManager])
@@ -491,18 +496,18 @@ def complete_order(request, pk):
                        status=status.HTTP_403_FORBIDDEN)
     order.status = Order.OrderStatus.COMPLETED
     order.completion_datetime = timezone.now()
-    order.moderator_username = redis_user['username']
+    order.moderator = request.user
     order.save()
     for drug_in_order in DrugInOrder.objects.filter(order=order):
         drug_in_order.calculate_infusion_speed()
         drug_in_order.save()
-    serializer = FullOrderSerializer(order)
+    serializer = OrderSerializer(order)
     return Response(serializer.data)
 
 
 @swagger_auto_schema(
     method='put',
-    responses={200: FullOrderSerializer, 403: 'Forbidden'}
+    responses={200: OrderSerializer, 403: 'Forbidden'}
 )
 @api_view(['PUT'])
 @permission_classes([IsManager])
@@ -517,9 +522,9 @@ def reject_order(request, pk):
                        status=status.HTTP_403_FORBIDDEN)
     order.status = Order.OrderStatus.REJECTED
     order.completion_datetime = timezone.now()
-    order.moderator_username = redis_user['username']
+    order.moderator = request.user
     order.save()
-    serializer = FullOrderSerializer(order)
+    serializer = OrderSerializer(order)
     return Response(serializer.data)
 
 
@@ -551,7 +556,7 @@ def drug_in_order_actions(request, order_pk, drug_pk):
     order = get_object_or_404(Order, pk=order_pk)
     username = redis_user['username']
     
-    if order.creator_username != username:
+    if order.creator != request.user:
         return Response({"error": "Можно изменять только свои заявки"}, 
                        status=status.HTTP_403_FORBIDDEN)
     if order.status != Order.OrderStatus.DRAFT:
@@ -575,7 +580,6 @@ def drug_in_order_actions(request, order_pk, drug_pk):
                 return Response({"error": "Неверный формат объёма ампулы"}, 
                                status=status.HTTP_400_BAD_REQUEST)
         
-        # Пересчитываем скорость инфузии
         drug_in_order.calculate_infusion_speed()
         drug_in_order.save()
         
@@ -586,13 +590,7 @@ def drug_in_order_actions(request, order_pk, drug_pk):
 
 
 class DrugList(APIView):
-    """
-    Список всех активных препаратов
-    GET: доступно всем (включая гостей)
-    POST: только для администраторов
-    """
-    # Uses default authentication from settings (Token + Cookie)
-    permission_classes = [AllowAny]  # GET for all, POST checked in method
+    permission_classes = [AllowAny]
     
     @swagger_auto_schema(
         operation_description="Получить список всех активных препаратов. Доступно без авторизации.",
@@ -627,22 +625,15 @@ class DrugList(APIView):
 
 
 class DrugDetail(APIView):
-    """
-    Детальная информация о препарате
-    GET: доступно всем
-    PUT: только для администраторов
-    DELETE: только для администраторов
-    """
-    # Uses default authentication from settings (Token + Cookie)
-    permission_classes = [AllowAny]  # GET for all, PUT/DELETE checked in methods
+    permission_classes = [AllowAny]
     
     @swagger_auto_schema(
         operation_description="Получить детальную информацию о препарате. Доступно без авторизации.",
-        responses={200: FullDrugSerializer, 404: 'Not Found'}
+        responses={200: DrugSerializer, 404: 'Not Found'}
     )
     def get(self, request, pk, format=None):
         drug = get_object_or_404(Drug, pk=pk, is_active=True)
-        serializer = FullDrugSerializer(drug)
+        serializer = DrugSerializer(drug)
         return Response(serializer.data)
     
     @swagger_auto_schema(
@@ -706,7 +697,7 @@ def add_drug_to_order(request, pk):
     drug = get_object_or_404(Drug, pk=pk, is_active=True)
     username = redis_user['username']
     order, created = Order.objects.get_or_create(
-        creator_username=username,
+        creator=request.user,
         status=Order.OrderStatus.DRAFT,
         defaults={'creation_datetime': timezone.now()}
     )
@@ -731,7 +722,7 @@ def search(request):
             'id': drug.id,
             'name': drug.name,
             'description': drug.description,
-            'image': drug.image_url or 'http://localhost:9000/images/default.png',
+            'image': drug.image_url,
             'concentration': f'{drug.concentration} мг/мл',
             'volume': f'{drug.volume} мл',
         })
@@ -746,7 +737,7 @@ def search(request):
         else:
             username = 'anonymous'
         
-        draft_order = Order.objects.filter(creator_username=username, status=Order.OrderStatus.DRAFT).first()
+        draft_order = Order.objects.filter(creator=request.user, status=Order.OrderStatus.DRAFT).first()
         if draft_order:
             estimation_count = DrugInOrder.objects.filter(order=draft_order).count()
             order_id = draft_order.id
@@ -764,7 +755,7 @@ def vasoactive_drug_detail(request, drug_id):
         'id': drug.id,
         'name': drug.name,
         'description': drug.description,
-        'image': drug.image_url or 'http://localhost:9000/images/default.png',
+        'image': drug.image_url,
         'concentration': f'{drug.concentration} мг/мл',
         'volume': f'{drug.volume} мл',
     }
@@ -772,14 +763,13 @@ def vasoactive_drug_detail(request, drug_id):
     estimation_count = 0
     order_id = None
     try:
-        # Get Redis user
         redis_user = get_redis_user(request)
         if redis_user:
             username = redis_user['username']
         else:
             username = 'anonymous'
         
-        draft_order = Order.objects.filter(creator_username=username, status=Order.OrderStatus.DRAFT).first()
+        draft_order = Order.objects.filter(creator=request.user, status=Order.OrderStatus.DRAFT).first()
         if draft_order:
             estimation_count = DrugInOrder.objects.filter(order=draft_order).count()
             order_id = draft_order.id
@@ -795,16 +785,14 @@ def add_to_order_html(request, drug_id):
     
     drug = get_object_or_404(Drug, id=drug_id, is_active=True)
     
-    # Get Redis user
     redis_user = get_redis_user(request)
     if not redis_user:
-        # Use anonymous username for unauthenticated users
         username = 'anonymous'
     else:
         username = redis_user['username']
     
     draft_order, created = Order.objects.get_or_create(
-        creator_username=username,
+        creator=request.user,
         status=Order.OrderStatus.DRAFT
     )
     
@@ -817,7 +805,6 @@ def add_to_order_html(request, drug_id):
 
 
 def estimation_infusion_speed(request, order_id=None):
-    # Get Redis user
     redis_user = get_redis_user(request)
     if not redis_user:
         username = 'anonymous'
@@ -825,13 +812,13 @@ def estimation_infusion_speed(request, order_id=None):
         username = redis_user['username']
     
     if order_id:
-        order = get_object_or_404(Order, id=order_id, creator_username=username)
+        order = get_object_or_404(Order, id=order_id, creator=request.user)
         if order.status == Order.OrderStatus.DELETED:
             raise Http404("Заявка удалена")
         draft_order = order
     else:
         draft_order = Order.objects.filter(
-            creator_username=username, 
+            creator=request.user, 
             status__in=[Order.OrderStatus.DRAFT, Order.OrderStatus.FORMED]
         ).first()
     
@@ -857,7 +844,7 @@ def estimation_infusion_speed(request, order_id=None):
             'concentration': f'{drug_in_order.drug.concentration} мг/мл',
             'volume': f'{drug_in_order.drug.volume} мл',
             'ampoule_volume': ampoule_vol_str,
-            'image': drug_in_order.drug.image_url or 'http://localhost:9000/images/default.png',
+            'image': drug_in_order.drug.image_url,
             'infusion_speed': f'{drug_in_order.infusion_speed}' if drug_in_order.infusion_speed else ''
         })
     

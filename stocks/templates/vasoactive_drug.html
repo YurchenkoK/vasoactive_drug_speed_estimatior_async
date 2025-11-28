@@ -13,10 +13,8 @@
     <div class="container">
         <div class="drug-detail">
             <div class="drug-detail-image">
-                {% if drug.image|slice:":4" == "http" %}
+                {% if drug.image %}
                     <img src="{{ drug.image }}" alt="{{ drug.name }}">
-                {% else %}
-                    <img src="{% static drug.image %}" alt="{{ drug.name }}">
                 {% endif %}
             </div>
             <div class="drug-detail-info">
