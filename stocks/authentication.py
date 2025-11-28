@@ -47,7 +47,7 @@ class RedisTokenAuthentication(authentication.BaseAuthentication):
 class RedisCookieAuthentication(authentication.BaseAuthentication):
     
     def authenticate(self, request):
-        session_id = request.COOKIES.get('redis_session_id')
+        session_id = request.COOKIES.get('session_id')
         
         if not session_id:
             return None

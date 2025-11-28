@@ -134,7 +134,7 @@ class UserRegistration(APIView):
         
         token = redis_user_client.create_token(username)
         
-        response.set_cookie('redis_session_id', session_id, 
+        response.set_cookie('session_id', session_id, 
                           max_age=86400, httponly=True, samesite='Lax')
         
         response.data['token'] = token
@@ -147,7 +147,7 @@ class UserProfile(APIView):
     authentication_classes = []
     
     def _get_user_from_request(self, request):
-        session_id = request.COOKIES.get('redis_session_id')
+        session_id = request.COOKIES.get('session_id')
         if not session_id:
             return None
         return redis_user_client.get_session(session_id)
@@ -240,7 +240,7 @@ def user_login(request):
             "message": "Успешная аутентификация"
         })
         
-        response.set_cookie('redis_session_id', session_id, 
+        response.set_cookie('session_id', session_id, 
                           max_age=86400, httponly=True, samesite='Lax')
         
         return response
@@ -257,7 +257,7 @@ def user_login(request):
 @permission_classes([AllowAny])
 @authentication_classes([])
 def user_logout(request):
-    session_id = request.COOKIES.get('redis_session_id')
+    session_id = request.COOKIES.get('session_id')
     if session_id:
         redis_user_client.delete_session(session_id)
     
@@ -267,47 +267,9 @@ def user_logout(request):
         redis_user_client.revoke_token(token)
     
     response = Response({"message": "Деавторизация выполнена"})
-    response.delete_cookie('redis_session_id')
+    response.delete_cookie('session_id')
     
     return response
-
-
-@swagger_auto_schema(
-    method='post',
-    responses={200: openapi.Schema(
-        type=openapi.TYPE_OBJECT,
-        properties={
-            'token': openapi.Schema(type=openapi.TYPE_STRING, description='New API token')
-        }
-    )}
-)
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def refresh_token(request):
-    user = get_redis_user(request)
-    if not user:
-        return Response({"error": "Authentication required"}, status=status.HTTP_401_UNAUTHORIZED)
-    
-    username = user['username']
-    new_token = redis_user_client.create_token(username)
-    
-    return Response({"token": new_token, "username": username})
-
-
-@swagger_auto_schema(
-    method='get',
-    responses={200: UserSerializer, 401: 'Unauthorized'}
-)
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def get_current_user(request):
-    user = get_redis_user(request)
-    if not user:
-        return Response({"error": "Требуется аутентификация"}, 
-                       status=status.HTTP_401_UNAUTHORIZED)
-    
-    serializer = UserSerializer(user)
-    return Response(serializer.data)
 
 
 @swagger_auto_schema(

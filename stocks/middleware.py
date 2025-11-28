@@ -44,7 +44,7 @@ class RedisUserMiddleware:
                 user_data = redis_user_client.get_user(username)
         
         if not user_data:
-            session_id = request.COOKIES.get('redis_session_id')
+            session_id = request.COOKIES.get('session_id')
             if session_id:
                 user_data = redis_user_client.get_session(session_id)
         

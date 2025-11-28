@@ -19,7 +19,7 @@ def get_redis_user(request):
                 'role': user.role if hasattr(user, 'role') else 'USER'
             }
     
-    session_id = request.COOKIES.get('redis_session_id')
+    session_id = request.COOKIES.get('session_id')
     if session_id:
         return redis_user_client.get_session(session_id)
     
