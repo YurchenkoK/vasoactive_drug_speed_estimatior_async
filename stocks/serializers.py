@@ -42,8 +42,7 @@ class DrugInOrderSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    items = DrugInOrderSerializer(many=True, read_only=True)
-    
+    # Removed nested 'items' from all Order responses per API requirement
     class Meta:
         model = Order
         fields = [
@@ -54,7 +53,25 @@ class OrderSerializer(serializers.ModelSerializer):
             'creation_datetime',
             'formation_datetime',
             'completion_datetime',
-            'items',
+            'ampoules_count',
+            'solvent_volume',
+            'patient_weight'
+        ]
+        read_only_fields = ['id', 'creator', 'moderator', 'status', 'creation_datetime', 'formation_datetime', 'completion_datetime']
+
+
+class OrderListSerializer(serializers.ModelSerializer):
+    """Serializer for order list view — excludes item details to keep list compact."""
+    class Meta:
+        model = Order
+        fields = [
+            'id',
+            'creator',
+            'moderator',
+            'status',
+            'creation_datetime',
+            'formation_datetime',
+            'completion_datetime',
             'ampoules_count',
             'solvent_volume',
             'patient_weight'

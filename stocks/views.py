@@ -307,7 +307,7 @@ class OrderList(APIView):
             openapi.Parameter('date_to', openapi.IN_QUERY, type=openapi.TYPE_STRING, format='date'),
             openapi.Parameter('status', openapi.IN_QUERY, type=openapi.TYPE_STRING),
         ],
-        responses={200: OrderSerializer(many=True)}
+        responses={200: 'A list of orders (compact representation without items)'}
     )
     def get(self, request, format=None):
         redis_user = get_redis_user(request)
@@ -339,7 +339,8 @@ class OrderList(APIView):
             orders = orders.filter(status=order_status)
         
         orders = orders.order_by('status', '-creation_datetime')
-        serializer = OrderSerializer(orders, many=True)
+        from stocks.serializers import OrderListSerializer
+        serializer = OrderListSerializer(orders, many=True)
         return Response(serializer.data)
 
 
@@ -458,7 +459,8 @@ def complete_order(request, pk):
                        status=status.HTTP_403_FORBIDDEN)
     order.status = Order.OrderStatus.COMPLETED
     order.completion_datetime = timezone.now()
-    order.moderator = request.user
+    # store moderator username (request.user may be a dict from Redis auth)
+    order.moderator = redis_user.get('username') if isinstance(redis_user, dict) else getattr(request.user, 'username', None)
     order.save()
     for drug_in_order in DrugInOrder.objects.filter(order=order):
         drug_in_order.calculate_infusion_speed()
@@ -484,7 +486,7 @@ def reject_order(request, pk):
                        status=status.HTTP_403_FORBIDDEN)
     order.status = Order.OrderStatus.REJECTED
     order.completion_datetime = timezone.now()
-    order.moderator = request.user
+    order.moderator = redis_user.get('username') if isinstance(redis_user, dict) else getattr(request.user, 'username', None)
     order.save()
     serializer = OrderSerializer(order)
     return Response(serializer.data)
