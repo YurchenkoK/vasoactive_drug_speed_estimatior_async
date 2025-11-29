@@ -8,6 +8,7 @@ import { mockDrugs } from "../mock/DrugMock";
 import type { RootState } from "../store";
 import { setName } from "../features/drugsFilter/filterSlice";
 import "./DrugsPage.css";
+import CartButton from "../components/CartButton";
 
 export default function DrugsPage() {
   const dispatch = useDispatch();
@@ -99,8 +100,11 @@ export default function DrugsPage() {
         </div>
       </div>
 
-      {loading ? (
-        <div className="loading-message">Загрузка...</div>
+        {/* Добавленная кнопка корзины на странице каталога */}
+        <CartButton />
+
+        {loading ? (
+        <div className="loading-container"></div>
       ) : notFound ? (
         <div className="not-found-message">Ничего не найдено</div>
       ) : (

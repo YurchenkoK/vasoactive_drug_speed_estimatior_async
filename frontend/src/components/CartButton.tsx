@@ -9,8 +9,8 @@ export default function CartButton({ count = 0 }: CartButtonProps) {
   const [cartCount] = useState(count);
 
   const handleClick = () => {
-    console.log("Cart button clicked, returning 0");
-    return 0;
+    console.log("Кнопка корзины нажата");
+    return "0";
   };
 
   return (

@@ -13,7 +13,7 @@ class Drug(models.Model):
         db_table = 'ssr_inDb_drug'
         verbose_name = "Препарат"
         verbose_name_plural = "Препараты"
-        ordering = ['name']
+        ordering = ['id']
     
     def __str__(self):
         return self.name

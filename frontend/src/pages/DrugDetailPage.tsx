@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Breadcrumbs from "../components/Breadcrumbs";
+import CartButton from "../components/CartButton";
 import type { Drug } from "../DrugTypes";
 import { getDrug } from "../drugsApi";
 import { mockDrugs } from "../mock/DrugMock";
@@ -70,6 +71,8 @@ export default function DrugDetailPage() {
           </div>
         </div>
       </div>
+        {/* Фиксированная кнопка корзины внизу слева на странице с товаром */}
+        <CartButton />
     </div>
   );
 }

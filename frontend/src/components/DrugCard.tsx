@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import type { Drug } from "../DrugTypes";
 import "./DrugCard.css";
+import CartButton from "./CartButton";
 
 interface DrugCardProps {
   drug: Drug;
@@ -33,6 +34,9 @@ export default function DrugCard({ drug }: DrugCardProps) {
       <Link to={`/drugs/${drug.id}`} className="details-button">
         Подробнее
       </Link>
+      
+      {/* Добавленная кнопка корзины 1 в 1 */}
+      <CartButton />
     </div>
   );
 }
