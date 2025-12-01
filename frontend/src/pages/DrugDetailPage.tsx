@@ -4,6 +4,7 @@ import Breadcrumbs from "../components/Breadcrumbs";
 import CartButton from "../components/CartButton";
 import type { Drug } from "../DrugTypes";
 import { getDrug } from "../drugsApi";
+import { useCart } from "../CartContext";
 import { mockDrugs } from "../mock/DrugMock";
 import "./DrugDetailPage.css";
 
@@ -13,6 +14,7 @@ const DEFAULT_IMAGE = `${BASE_URL}placeholder-drug.png`;
 export default function DrugDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [drug, setDrug] = useState<Drug | null>(null);
+  const { fetchOnPageEnter } = useCart();
 
   useEffect(() => {
     if (!id) return;
@@ -33,6 +35,14 @@ export default function DrugDetailPage() {
     };
 
     loadDrug();
+    // fetch and log cart info when entering the product page
+    (async () => {
+      try {
+        await fetchOnPageEnter();
+      } catch (e) {
+        // fail silently
+      }
+    })();
   }, [id]);
 
   if (!drug) {
@@ -71,8 +81,8 @@ export default function DrugDetailPage() {
           </div>
         </div>
       </div>
-        {/* Фиксированная кнопка корзины внизу слева на странице с товаром */}
-        <CartButton />
+  {/* Фиксированная кнопка корзины внизу слева на странице с товаром */}
+  <CartButton />
     </div>
   );
 }

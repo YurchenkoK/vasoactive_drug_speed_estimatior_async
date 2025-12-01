@@ -1,16 +1,23 @@
-import { useState } from "react";
 import "./CartButton.css";
+import { useCart } from "../CartContext";
 
 interface CartButtonProps {
+  orderId?: number; // kept for backward compatibility but unused
   count?: number;
 }
 
-export default function CartButton({ count = 0 }: CartButtonProps) {
-  const [cartCount] = useState(count);
+export default function CartButton({ count }: CartButtonProps) {
+  // Prefer props if provided, otherwise read from context
+  const { cart, fetchOnClick } = useCart();
+  const usedCount = count ?? cart.count;
 
-  const handleClick = () => {
-    console.log("Кнопка корзины нажата");
-    return "0";
+  const handleClick = async () => {
+    // Use the same centralized function as pages do
+    try {
+      await fetchOnClick();
+    } catch (e) {
+      // fail silently
+    }
   };
 
   return (
@@ -20,12 +27,12 @@ export default function CartButton({ count = 0 }: CartButtonProps) {
         className="cart-icon-link"
         onClick={(e) => {
           e.preventDefault();
-          handleClick();
+          void handleClick();
         }}
       >
         <div className="icon-circle">
           <span className="microscope">🔬</span>
-          {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
+          {usedCount > 0 && <span className="cart-badge">{usedCount}</span>}
         </div>
       </a>
     </div>

@@ -40,3 +40,22 @@ export async function getDrug(id: number): Promise<Drug | null> {
     return null;
   }
 }
+
+export interface CartInfo {
+  order_id: number;
+  count: number;
+}
+
+export async function getCartInfo(): Promise<CartInfo> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/orders/cart/`, { 
+      headers: { Accept: "application/json" },
+      credentials: 'include'
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    console.warn("[API] error fetching cart info", err);
+    return { order_id: 0, count: 0 };
+  }
+}

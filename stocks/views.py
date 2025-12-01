@@ -283,11 +283,12 @@ def user_logout(request):
     ))}
 )
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
+@authentication_classes([])
 def cart_icon(request):
     redis_user = get_redis_user(request)
     if not redis_user:
-        return Response({'error': 'Authentication required'}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response({"order_id": 0, "count": 0})
     
     username = redis_user['username']
     try:
@@ -295,7 +296,7 @@ def cart_icon(request):
         count = DrugInOrder.objects.filter(order=order).count()
         return Response({"order_id": order.id, "count": count})
     except Order.DoesNotExist:
-        return Response({"order_id": None, "count": 0})
+        return Response({"order_id": 0, "count": 0})
 
 
 class OrderList(APIView):
