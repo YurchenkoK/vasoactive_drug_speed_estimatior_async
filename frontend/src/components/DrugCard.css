@@ -5,8 +5,10 @@
   text-align: left;
   display: flex;
   flex-direction: column;
-  min-height: 322px;
-  position: relative;
+  box-sizing: border-box;
+  /* allow cards to be responsive in a flex container (methodics pattern) */
+  flex: 1 1 300px;
+  min-height: 260px;
   transition: box-shadow 0.2s;
 }
 
@@ -16,7 +18,8 @@
 
 .drug-image {
   width: 100%;
-  height: 140px;
+  max-height: 160px;
+  height: auto;
   object-fit: contain;
   margin-bottom: 15px;
   align-self: center;
@@ -49,12 +52,12 @@
   font-size: 13px;
   font-weight: 500;
   text-align: center;
-  position: absolute;
-  bottom: 16px;
-  right: 16px;
   transition: background-color 0.2s;
   border: none;
   cursor: pointer;
+  /* push button to the bottom of the card using flex spacing */
+  margin-top: auto;
+  align-self: flex-end;
 }
 
 .details-button:hover {
@@ -62,45 +65,7 @@
   color: white;
 }
 
-/* Адаптивность для DrugCard */
-@media (max-width: 768px) {
-  .drug-card {
-    padding: 15px 12px;
-    min-height: 300px;
-  }
-  
-  .drug-image {
-    height: 120px;
-  }
-  
-  .drug-name {
-    font-size: 15px;
-  }
-  
-  .drug-concentration {
-    font-size: 12px;
-    margin-bottom: 50px;
-  }
-  
-  .details-button {
-    font-size: 12px;
-    padding: 7px 16px;
-    bottom: 12px;
-    right: 12px;
-  }
-}
-
-@media (max-width: 576px) {
-  .drug-card {
-    padding: 12px;
-    min-height: 280px;
-  }
-  
-  .drug-image {
-    height: 100px;
-  }
-  
-  .drug-name {
-    font-size: 14px;
-  }
-}
+/* Minimal explicit breakpoints are no longer required for card sizes.
+   The cards use flex: 1 1 300px and will naturally wrap to new rows as
+   the available width decreases (methodics approach). If needed, small
+   tweaks for very small screens can be added later. */
