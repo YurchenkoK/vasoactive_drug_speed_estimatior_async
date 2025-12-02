@@ -30,13 +30,12 @@ class RedisUserClient:
         try:
             self.redis_client = redis.Redis(**redis_config)
             self.redis_client.ping()
-            print(f"✓ Подключен к Redis ({redis_config['host']}:{redis_config['port']})")
             self._load_lua_scripts()
             return
         except redis.exceptions.AuthenticationError as e:
             connection_attempts.append(f"Попытка с настроенными credentials: {e}")
         except redis.exceptions.ConnectionError as e:
-            print(f"✗ Ошибка подключения к Redis: {e}")
+            print(f"Ошибка подключения к Redis: {e}")
             raise
         
         if not redis_password:
@@ -52,15 +51,13 @@ class RedisUserClient:
                     
                     self.redis_client = redis.Redis(**test_config)
                     self.redis_client.ping()
-                    print(f"✓ Подключен к Redis с паролем: {'(пусто)' if not pwd else '***'}")
-                    print(f"  Добавьте в settings.py: REDIS_PASSWORD = '{pwd}'")
                     self._load_lua_scripts()
                     return
                 except:
                     connection_attempts.append(f"Пароль '{pwd}': не подошел")
                     continue
         
-        print("\n✗ Не удалось подключиться к Redis")
+        print("\nНе удалось подключиться к Redis")
         print("\nПопробованные варианты:")
         for attempt in connection_attempts[:3]:
             print(f"  - {attempt}")

@@ -320,13 +320,9 @@ class OrderList(APIView):
         username = redis_user['username']
         
         if is_staff or is_superuser:
-            orders = Order.objects.exclude(
-                status__in=[Order.OrderStatus.DELETED, Order.OrderStatus.DRAFT]
-            )
+            orders = Order.objects.exclude(status=Order.OrderStatus.DELETED)
         else:
-            orders = Order.objects.filter(creator=username).exclude(
-                status__in=[Order.OrderStatus.DELETED, Order.OrderStatus.DRAFT]
-            )
+            orders = Order.objects.filter(creator=username).exclude(status=Order.OrderStatus.DELETED)
         
         date_from = request.query_params.get('date_from', None)
         date_to = request.query_params.get('date_to', None)
@@ -362,7 +358,7 @@ class OrderDetail(APIView):
         is_staff = redis_user.get('is_staff', False)
         is_superuser = redis_user.get('is_superuser', False)
         
-        if order.creator != request.user and not (is_staff or is_superuser):
+        if order.creator != username and not (is_staff or is_superuser):
             return Response({"error": "Нет доступа к этой заявке"}, 
                           status=status.HTTP_403_FORBIDDEN)
         if order.status == Order.OrderStatus.DELETED:
@@ -382,7 +378,7 @@ class OrderDetail(APIView):
         order = get_object_or_404(Order, pk=pk)
         username = redis_user['username']
         
-        if order.creator != request.user:
+        if order.creator != username:
             return Response({"error": "Можно редактировать только свои заявки"}, 
                           status=status.HTTP_403_FORBIDDEN)
         if order.status != Order.OrderStatus.DRAFT:
@@ -402,7 +398,7 @@ class OrderDetail(APIView):
         order = get_object_or_404(Order, pk=pk)
         username = redis_user['username']
         
-        if order.creator != request.user:
+        if order.creator != username:
             return Response({"error": "Можно удалять только свои заявки"}, 
                           status=status.HTTP_403_FORBIDDEN)
         order.status = Order.OrderStatus.DELETED
@@ -424,7 +420,7 @@ def form_order(request, pk):
     order = get_object_or_404(Order, pk=pk)
     username = redis_user['username']
     
-    if order.creator != request.user:
+    if order.creator != username:
         return Response({"error": "Можно формировать только свои заявки"}, 
                        status=status.HTTP_403_FORBIDDEN)
     if order.status != Order.OrderStatus.DRAFT:
@@ -436,59 +432,103 @@ def form_order(request, pk):
     if not DrugInOrder.objects.filter(order=order).exists():
         return Response({"error": "В заявке должен быть хотя бы один препарат"}, 
                        status=status.HTTP_400_BAD_REQUEST)
+    
     order.status = Order.OrderStatus.FORMED
     order.formation_datetime = timezone.now()
     order.save()
+    
     serializer = OrderSerializer(order)
     return Response(serializer.data)
 
 
 @swagger_auto_schema(
     method='put',
-    responses={200: OrderSerializer, 403: 'Forbidden'}
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['action'],
+        properties={
+            'action': openapi.Schema(
+                type=openapi.TYPE_STRING,
+                enum=['complete', 'reject'],
+                description='Действие: complete - завершить, reject - отклонить'
+            ),
+        },
+    ),
+    responses={200: OrderSerializer, 400: 'Bad Request', 403: 'Forbidden'}
 )
 @api_view(['PUT'])
 @permission_classes([IsManager])
 def complete_order(request, pk):
+    """
+    PUT /api/orders/{pk}/complete/
+    Завершить или отклонить заявку модератором.
+    
+    Body: {"action": "complete"} или {"action": "reject"}
+    """
+    import requests
+    from django.conf import settings
+    
     redis_user = get_redis_user(request)
     if not redis_user:
         return Response({'error': 'Authentication required'}, status=status.HTTP_401_UNAUTHORIZED)
     
-    order = get_object_or_404(Order, pk=pk)
-    if order.status != Order.OrderStatus.FORMED:
-        return Response({"error": "Можно завершать только сформированную заявку"}, 
-                       status=status.HTTP_403_FORBIDDEN)
-    order.status = Order.OrderStatus.COMPLETED
-    order.completion_datetime = timezone.now()
-    # store moderator username (request.user may be a dict from Redis auth)
-    order.moderator = redis_user.get('username') if isinstance(redis_user, dict) else getattr(request.user, 'username', None)
-    order.save()
-    for drug_in_order in DrugInOrder.objects.filter(order=order):
-        drug_in_order.calculate_infusion_speed()
-        drug_in_order.save()
-    serializer = OrderSerializer(order)
-    return Response(serializer.data)
-
-
-@swagger_auto_schema(
-    method='put',
-    responses={200: OrderSerializer, 403: 'Forbidden'}
-)
-@api_view(['PUT'])
-@permission_classes([IsManager])
-def reject_order(request, pk):
-    redis_user = get_redis_user(request)
-    if not redis_user:
-        return Response({'error': 'Authentication required'}, status=status.HTTP_401_UNAUTHORIZED)
+    action = request.data.get('action')
+    if action not in ['complete', 'reject']:
+        return Response(
+            {"error": "action должен быть 'complete' или 'reject'"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
     
     order = get_object_or_404(Order, pk=pk)
     if order.status != Order.OrderStatus.FORMED:
-        return Response({"error": "Можно отклонять только сформированную заявку"}, 
-                       status=status.HTTP_403_FORBIDDEN)
-    order.status = Order.OrderStatus.REJECTED
-    order.completion_datetime = timezone.now()
+        return Response(
+            {"error": "Можно завершать/отклонять только сформированную заявку"}, 
+            status=status.HTTP_403_FORBIDDEN
+        )
+    
+    # Устанавливаем модератора
     order.moderator = redis_user.get('username') if isinstance(redis_user, dict) else getattr(request.user, 'username', None)
-    order.save()
+    order.completion_datetime = timezone.now()
+    
+    if action == 'complete':
+        # Утверждаем заявку
+        order.status = Order.OrderStatus.COMPLETED
+        order.save()
+        
+        # После утверждения Django-сервис направляет POST запрос /drugs_process/ в асинхронный Go-сервис
+        drugs_in_order = DrugInOrder.objects.filter(order=order)
+        drugs_data = []
+        for drug_in_order in drugs_in_order:
+            drugs_data.append({
+                "druginorder_id": drug_in_order.id,
+                "drug_concentration": float(drug_in_order.drug.concentration),
+                "ampoule_volume": float(drug_in_order.ampoule_volume or drug_in_order.drug.volume),
+                "ampoules_count": order.ampoules_count,
+                "solvent_volume": float(order.solvent_volume),
+                "patient_weight": float(order.patient_weight)
+            })
+        
+        try:
+            # Отправляем запрос к Go сервису
+            response = requests.post(
+                f"{settings.ASYNC_SERVICE_URL}/drugs_process/",
+                json={
+                    "order_id": order.id,
+                    "drugs": drugs_data
+                },
+                timeout=5
+            )
+            if response.status_code != 202:
+                print(f"Go service returned unexpected status: {response.status_code}")
+        except requests.exceptions.RequestException as e:
+            # Логируем ошибку, но не останавливаем процесс утверждения заявки
+            print(f"Error calling async service: {e}")
+    
+    elif action == 'reject':
+        # Отклоняем заявку
+        order.status = Order.OrderStatus.REJECTED
+        order.save()
+    
     serializer = OrderSerializer(order)
     return Response(serializer.data)
 
@@ -521,7 +561,7 @@ def drug_in_order_actions(request, order_pk, drug_pk):
     order = get_object_or_404(Order, pk=order_pk)
     username = redis_user['username']
     
-    if order.creator != request.user:
+    if order.creator != username:
         return Response({"error": "Можно изменять только свои заявки"}, 
                        status=status.HTTP_403_FORBIDDEN)
     if order.status != Order.OrderStatus.DRAFT:
@@ -545,7 +585,7 @@ def drug_in_order_actions(request, order_pk, drug_pk):
                 return Response({"error": "Неверный формат объёма ампулы"}, 
                                status=status.HTTP_400_BAD_REQUEST)
         
-        drug_in_order.calculate_infusion_speed()
+        # Убираем автоматический перерасчет
         drug_in_order.save()
         
         serializer = DrugInOrderSerializer(drug_in_order)
@@ -882,4 +922,92 @@ def complete_order_html(request, order_id):
     order.save()
     
     return redirect('search')
+
+
+@swagger_auto_schema(
+    method='post',
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=['secret_key', 'order_id', 'results'],
+        properties={
+            'secret_key': openapi.Schema(type=openapi.TYPE_STRING, description='Secret key for authentication'),
+            'order_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='Order ID'),
+            'results': openapi.Schema(
+                type=openapi.TYPE_ARRAY,
+                items=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'druginorder_id': openapi.Schema(type=openapi.TYPE_INTEGER),
+                        'infusion_speed': openapi.Schema(type=openapi.TYPE_NUMBER, format=openapi.FORMAT_FLOAT),
+                    }
+                ),
+                description='Array of calculation results'
+            ),
+        },
+    ),
+    responses={
+        200: 'Results updated successfully',
+        401: 'Invalid secret key',
+        404: 'Order not found'
+    }
+)
+@api_view(['POST'])
+@permission_classes([AllowAny])
+@authentication_classes([])
+def update_async_results(request):
+    """
+    POST /api/orders/async/update_results/
+    Принять результат от асинхронного сервиса.
+    
+    Асинхронный Go-сервис после обработки вычисляет скорость введения препаратов
+    и направляет результат обратно в Django через этот эндпоинт.
+    Django-сервис проверяет секретный ключ, обновляет данные заявки и отвечает 200 OK.
+    """
+    from django.conf import settings
+    
+    secret_key = request.data.get('secret_key')
+    order_id = request.data.get('order_id')
+    results = request.data.get('results', [])
+    
+    # Проверка секретного ключа
+    if secret_key != settings.ASYNC_SERVICE_TOKEN:
+        return Response(
+            {"error": "Неверный секретный ключ"},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+    
+    # Проверка наличия заявки
+    try:
+        order = Order.objects.get(pk=order_id)
+    except Order.DoesNotExist:
+        return Response(
+            {"error": f"Заявка с ID {order_id} не найдена"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    # Обновление результатов для каждого препарата в заявке
+    updated_count = 0
+    for result_item in results:
+        druginorder_id = result_item.get('druginorder_id')
+        infusion_speed = result_item.get('infusion_speed')
+        
+        if druginorder_id and infusion_speed is not None:
+            try:
+                drug_in_order = DrugInOrder.objects.get(
+                    pk=druginorder_id,
+                    order=order
+                )
+                drug_in_order.infusion_speed = infusion_speed
+                drug_in_order.async_calculation_result = str(infusion_speed)
+                drug_in_order.save()
+                updated_count += 1
+            except DrugInOrder.DoesNotExist:
+                continue
+    
+    return Response({
+        "status": "success",
+        "message": "Результаты успешно обновлены",
+        "order_id": order_id,
+        "updated_count": updated_count
+    })
 

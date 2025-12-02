@@ -100,6 +100,12 @@ class DrugInOrder(models.Model):
         blank=True, 
         verbose_name="Скорость введения (мг/кг/час)"
     )
+    async_calculation_result = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+        verbose_name="Результат асинхронного расчета"
+    )
     
     class Meta:
         db_table = 'ssr_inDb_druginorder'
@@ -116,9 +122,13 @@ class DrugInOrder(models.Model):
         super().save(*args, **kwargs)
     
     def calculate_infusion_speed(self):
+        from decimal import Decimal
+        
         if self.order and self.order.solvent_volume and self.order.patient_weight and self.order.ampoules_count:
             volume = self.ampoule_volume if self.ampoule_volume else self.drug.volume
-            total_drug_mg = self.drug.concentration * self.order.ampoules_count * volume
+            # Приводим все к Decimal для корректных вычислений
+            volume = Decimal(str(volume)) if not isinstance(volume, Decimal) else volume
+            total_drug_mg = self.drug.concentration * Decimal(self.order.ampoules_count) * volume
             infusion_speed_ml_hour = self.order.solvent_volume
             drug_mg_per_hour = (infusion_speed_ml_hour / self.order.solvent_volume) * total_drug_mg
             infusion_speed = drug_mg_per_hour / self.order.patient_weight

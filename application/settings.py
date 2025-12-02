@@ -114,6 +114,10 @@ REDIS_HOST = 'redis'
 REDIS_PORT = 6379
 REDIS_PASSWORD = 'password'
 
+# Токен для асинхронного сервиса
+ASYNC_SERVICE_TOKEN = 'a1b2c3d4e5f6g7h8'
+ASYNC_SERVICE_URL = 'http://localhost:8081'
+
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"
 

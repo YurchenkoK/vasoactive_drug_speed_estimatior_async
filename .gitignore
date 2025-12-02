@@ -9,6 +9,9 @@ __pycache__/
 *.log
 db.sqlite3
 db.sqlite3-journal
+staticfiles/
+static_root/
+media/
 
 # Virtual Environment
 venv/
@@ -25,6 +28,13 @@ ENV/
 
 # Examples
 example/
+
+# Go
+async_service/async-service
+async_service/go.sum
+*.exe
+*.test
+*.out
 
 # Frontend build artifacts
 frontend/dist/

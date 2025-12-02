@@ -16,7 +16,6 @@ class DrugSerializer(serializers.ModelSerializer):
 
 
 class DrugInOrderSerializer(serializers.ModelSerializer):
-    drug_detail = DrugSerializer(source='drug', read_only=True)
     drug = serializers.PrimaryKeyRelatedField(
         queryset=Drug.objects.filter(is_active=True)
     )
@@ -30,11 +29,11 @@ class DrugInOrderSerializer(serializers.ModelSerializer):
             'id',
             'order',
             'drug',
-            'drug_detail',
             'ampoule_volume',
             'infusion_speed',
+            'async_calculation_result',
         ]
-        read_only_fields = ['id', 'drug_detail']
+        read_only_fields = ['id']
     
     def update(self, instance, validated_data):
         validated_data.pop('drug', None)
@@ -62,6 +61,9 @@ class OrderSerializer(serializers.ModelSerializer):
 
 class OrderListSerializer(serializers.ModelSerializer):
     """Serializer for order list view — excludes item details to keep list compact."""
+    async_results_count = serializers.SerializerMethodField()
+    items = serializers.SerializerMethodField()
+    
     class Meta:
         model = Order
         fields = [
@@ -74,9 +76,19 @@ class OrderListSerializer(serializers.ModelSerializer):
             'completion_datetime',
             'ampoules_count',
             'solvent_volume',
-            'patient_weight'
+            'patient_weight',
+            'async_results_count',
+            'items'
         ]
         read_only_fields = ['id', 'creator', 'moderator', 'status', 'creation_datetime', 'formation_datetime', 'completion_datetime']
+    
+    def get_async_results_count(self, obj):
+        """Возвращает количество DrugInOrder с заполненным async_calculation_result"""
+        return obj.items.filter(async_calculation_result__isnull=False).exclude(async_calculation_result='').count()
+    
+    def get_items(self, obj):
+        """Возвращает массив ID препаратов в заявке"""
+        return list(obj.items.values_list('drug_id', flat=True))
 
 
 class UserSerializer(serializers.Serializer):

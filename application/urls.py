@@ -42,9 +42,9 @@ urlpatterns = [
     path('api/orders/<int:pk>/', views.OrderDetail.as_view(), name='order-detail'),
     path('api/orders/<int:pk>/form/', views.form_order, name='order-form'),
     path('api/orders/<int:pk>/complete/', views.complete_order, name='order-complete'),
-    path('api/orders/<int:pk>/reject/', views.reject_order, name='order-reject'),
     
     path('api/orders/<int:order_pk>/drugs/<int:drug_pk>/', views.drug_in_order_actions, name='drug-in-order'),
+    path('api/orders/async/update_results/', views.update_async_results, name='update-async-results'),
     
    path('api/users/register/', views.UserRegistration.as_view(), name='user-register'),
    path('api/users/profile/<int:pk>/', views.UserProfile.as_view(), name='user-profile'),
