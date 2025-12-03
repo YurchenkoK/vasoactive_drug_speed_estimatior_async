@@ -75,8 +75,8 @@ def delete_pic(drug):
         
         img_obj_name = drug.image_url.split('/')[-1]
         client.remove_object('images', img_obj_name)
-    except Exception as e:
-        print(f"Error deleting image: {e}")
+    except Exception:
+        pass  # Error deleting image
 
 
 class UserRegistration(APIView):
@@ -519,10 +519,10 @@ def complete_order(request, pk):
                 timeout=5
             )
             if response.status_code != 202:
-                print(f"Go service returned unexpected status: {response.status_code}")
+                pass  # Go service returned unexpected status
         except requests.exceptions.RequestException as e:
-            # Логируем ошибку, но не останавливаем процесс утверждения заявки
-            print(f"Error calling async service: {e}")
+            # Ошибка вызова async service, но не останавливаем процесс утверждения заявки
+            pass
     
     elif action == 'reject':
         # Отклоняем заявку
@@ -955,14 +955,7 @@ def complete_order_html(request, order_id):
 @permission_classes([AllowAny])
 @authentication_classes([])
 def update_async_results(request):
-    """
-    POST /api/orders/async/update_results/
-    Принять результат от асинхронного сервиса.
-    
-    Асинхронный Go-сервис после обработки вычисляет скорость введения препаратов
-    и направляет результат обратно в Django через этот эндпоинт.
-    Django-сервис проверяет секретный ключ, обновляет данные заявки и отвечает 200 OK.
-    """
+    """Принять результат от асинхронного сервиса"""
     from django.conf import settings
     
     secret_key = request.data.get('secret_key')

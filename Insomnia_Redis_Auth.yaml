@@ -38,7 +38,7 @@ resources:
     _type: request
     name: POST добавление изображения
     method: POST
-    url: http://localhost:8000/api/drugs/1/add-image/
+    url: http://localhost:8001/api/drugs/1/add-image/
     body:
       mimeType: multipart/form-data
     
@@ -47,21 +47,21 @@ resources:
     _type: request
     name: POST добавления в заявку-черновик
     method: POST
-    url: http://localhost:8000/api/drugs/1/add-to-order/
+    url: http://localhost:8001/api/drugs/1/add-to-order/
     
   - _id: req_drug_delete
     parentId: fld_drugs
     _type: request
     name: DELETE удаление
     method: DELETE
-    url: http://localhost:8000/api/drugs/1/
+    url: http://localhost:8001/api/drugs/1/
         
   - _id: req_drug_update
     parentId: fld_drugs
     _type: request
     name: PUT изменение
     method: PUT
-    url: http://localhost:8000/api/drugs/1/
+    url: http://localhost:8001/api/drugs/1/
     headers:
       - name: Content-Type
         value: application/json
@@ -78,7 +78,7 @@ resources:
     _type: request
     name: POST добавление (без изображения)
     method: POST
-    url: http://localhost:8000/api/drugs/
+    url: http://localhost:8001/api/drugs/
     headers:
       - name: Content-Type
         value: application/json
@@ -98,28 +98,28 @@ resources:
     _type: request
     name: GET одна запись
     method: GET
-    url: http://localhost:8000/api/drugs/1/
+    url: http://localhost:8001/api/drugs/1/
     
   - _id: req_drugs_list
     parentId: fld_drugs
     _type: request
     name: GET список с фильтрацией
     method: GET
-    url: http://localhost:8000/api/drugs/?name=Нитроглицерин
+    url: http://localhost:8001/api/drugs/?name=Нитроглицерин
     
   - _id: req_order_delete
     parentId: fld_orders
     _type: request
     name: DELETE удаление
     method: DELETE
-    url: http://localhost:8000/api/orders/1/
+    url: http://localhost:8001/api/orders/1/
     
   - _id: req_order_complete_or_reject
     parentId: fld_orders
     _type: request
     name: PUT завершить/отклонить модератором
     method: PUT
-    url: http://localhost:8000/api/orders/1/complete/
+    url: http://localhost:8001/api/orders/1/complete/
     headers:
       - name: Content-Type
         value: application/json
@@ -135,14 +135,14 @@ resources:
     _type: request
     name: PUT сформировать создателем
     method: PUT
-    url: http://localhost:8000/api/orders/1/form/
+    url: http://localhost:8001/api/orders/1/form/
     
   - _id: req_order_update
     parentId: fld_orders
     _type: request
     name: PUT изменения полей заявки по теме
     method: PUT
-    url: http://localhost:8000/api/orders/1/
+    url: http://localhost:8001/api/orders/1/
     headers:
       - name: Content-Type
         value: application/json
@@ -160,28 +160,28 @@ resources:
     _type: request
     name: GET одна запись
     method: GET
-    url: http://localhost:8000/api/orders/1/
+    url: http://localhost:8001/api/orders/1/
     
   - _id: req_orders_list
     parentId: fld_orders
     _type: request
     name: GET список с фильтрацией
     method: GET
-    url: http://localhost:8000/api/orders/?status=FORMED&formation_date_from=2025-01-01&formation_date_to=2025-12-31
+    url: http://localhost:8001/api/orders/?status=FORMED&formation_date_from=2025-01-01&formation_date_to=2025-12-31
     
   - _id: req_cart_icon
     parentId: fld_orders
     _type: request
     name: GET иконки корзины
     method: GET
-    url: http://localhost:8000/api/orders/cart/
+    url: http://localhost:8001/api/orders/cart/
     
   - _id: req_drug_in_order_update
     parentId: fld_mm
     _type: request
     name: PUT изменение объёма ампулы в м-м
     method: PUT
-    url: http://localhost:8000/api/orders/1/drugs/1/
+    url: http://localhost:8001/api/orders/1/drugs/1/
     headers:
       - name: Content-Type
         value: application/json
@@ -198,14 +198,14 @@ resources:
     _type: request
     name: DELETE удаление из заявки
     method: DELETE
-    url: http://localhost:8000/api/orders/1/drugs/1/
+    url: http://localhost:8001/api/orders/1/drugs/1/
         
   - _id: req_user_register
     parentId: fld_users
     _type: request
     name: POST регистрация
     method: POST
-    url: http://localhost:8000/api/users/register/
+    url: http://localhost:8001/api/users/register/
     headers:
       - name: Content-Type
         value: application/json
@@ -225,7 +225,7 @@ resources:
     _type: request
     name: POST аутентификация
     method: POST
-    url: http://localhost:8000/api/users/login/
+    url: http://localhost:8001/api/users/login/
     headers:
       - name: Content-Type
         value: application/json
@@ -242,14 +242,14 @@ resources:
     _type: request
     name: GET полей пользователя
     method: GET
-    url: http://localhost:8000/api/users/profile/1/
+    url: http://localhost:8001/api/users/profile/1/
     
   - _id: req_user_profile_put
     parentId: fld_users
     _type: request
     name: PUT пользователя
     method: PUT
-    url: http://localhost:8000/api/users/profile/1/
+    url: http://localhost:8001/api/users/profile/1/
     headers:
       - name: Content-Type
         value: application/json
@@ -267,14 +267,40 @@ resources:
     _type: request
     name: POST деавторизация
     method: POST
-    url: http://localhost:8000/api/users/logout/
+    url: http://localhost:8001/api/users/logout/
     
+  - _id: req_go_drugs_process
+    parentId: fld_async
+    _type: request
+    name: POST запуск асинхронного расчета (Go-сервис)
+    method: POST
+    url: http://localhost:8081/drugs_process/
+    headers:
+      - name: Content-Type
+        value: application/json
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "order_id": 68,
+          "drugs": [
+            {
+              "druginorder_id": 86,
+              "drug_concentration": 4.0,
+              "ampoule_volume": 5.0,
+              "ampoules_count": 5,
+              "solvent_volume": 40.0,
+              "patient_weight": 80.0
+            }
+          ]
+        }
+  
   - _id: req_async_update_results
     parentId: fld_async
     _type: request
     name: POST принять результат от асинхронного сервиса
     method: POST
-    url: http://localhost:8000/api/orders/async/update_results/
+    url: http://localhost:8001/api/orders/async/update_results/
     headers:
       - name: Content-Type
         value: application/json
