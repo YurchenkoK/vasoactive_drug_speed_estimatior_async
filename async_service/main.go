@@ -13,7 +13,7 @@ import (
 
 // Константы для конфигурации
 const (
-	DJANGO_SERVICE_URL = "http://localhost:8000"
+	DJANGO_SERVICE_URL = "http://localhost:8005"
 	SECRET_KEY         = "a1b2c3d4e5f6g7h8"
 	PORT               = ":8081"
 )

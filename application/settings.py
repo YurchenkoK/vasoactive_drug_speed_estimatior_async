@@ -1,4 +1,5 @@
 import os
+import socket
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -54,14 +55,29 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'application.wsgi.application'
 
+# Determine DB host: priority
+# 1) DJANGO_DB_HOST env var
+# 2) host.docker.internal if it resolves (Docker Desktop case)
+# 3) 'db' (typical docker-compose service name)
+DB_HOST = os.environ.get('DJANGO_DB_HOST')
+if not DB_HOST:
+    try:
+        # quick DNS check - does host.docker.internal resolve here?
+        socket.getaddrinfo('host.docker.internal', None)
+        DB_HOST = 'host.docker.internal'
+    except Exception:
+        DB_HOST = os.environ.get('POSTGRES_HOST', 'db')
+
+DB_PORT = int(os.environ.get('DJANGO_DB_PORT', os.environ.get('POSTGRES_PORT', 5432)))
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.environ.get('DJANGO_DB_NAME', 'RIP'),
         'USER': os.environ.get('DJANGO_DB_USER', 'root'),
         'PASSWORD': os.environ.get('DJANGO_DB_PASSWORD', 'root'),
-        'HOST': os.environ.get('DJANGO_DB_HOST', 'db'),
-        'PORT': int(os.environ.get('DJANGO_DB_PORT', 5432)),
+        'HOST': DB_HOST,
+        'PORT': DB_PORT,
     }
 }
 
