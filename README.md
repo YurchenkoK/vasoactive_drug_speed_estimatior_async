@@ -1,3 +1,58 @@
+# Vasoactive Drug Speed Estimator
+
+Калькулятор скорости инфузии вазоактивных препаратов с поддержкой доступа по IP адресу и работы на GitHub Pages.
+
+## 🌐 Доступ по IP и GitHub Pages
+
+### 📚 Документация
+
+| Файл | Описание |
+|------|----------|
+| [VISUAL_GUIDE.txt](./VISUAL_GUIDE.txt) | 🎨 Визуальное руководство (начните здесь!) |
+| [QUICK_REFERENCE.md](./QUICK_REFERENCE.md) | ⚡ Быстрая шпаргалка с командами |
+| [SETUP_IP_ACCESS.md](./SETUP_IP_ACCESS.md) | 📖 Подробная инструкция по настройке |
+| [SUMMARY.md](./SUMMARY.md) | 📋 Полный обзор реализации |
+
+### 🚀 Быстрый старт:
+
+```bash
+# 1. Проверка конфигурации
+./check_config.sh
+
+# 2. Локальная разработка
+./run_backend.sh    # Терминал 1
+./run_frontend.sh   # Терминал 2
+
+# 3. Деплой на GitHub Pages
+./deploy_to_ghpages.sh
+```
+
+### 🎯 Основные команды
+
+```bash
+./check_config.sh           # Проверить конфигурацию
+./run_backend.sh            # Запуск Django на 0.0.0.0:8000
+./run_frontend.sh           # Запуск React на 0.0.0.0:3000
+./setup_ip_for_ghpages.sh   # Настроить IP для GitHub Pages
+./deploy_to_ghpages.sh      # Полный деплой на GH Pages
+```
+
+### 📱 Доступ
+
+**Локально:**
+- Frontend: `http://localhost:3000`
+- Backend: `http://localhost:8000`
+
+**По IP (из локальной сети):**
+- Frontend: `http://192.168.1.X:3000`
+- Backend: `http://192.168.1.X:8000`
+
+**GitHub Pages:**
+- `https://YurchenkoK.github.io/vasoactive_drug_speed_estimatior_frontend/`
+- (Требуется запущенный бэкенд на локальной машине)
+
+---
+
 #### Лабораторная 8
 
 - **Цель работы**: Межсервисное взаимодействие, асинхронность, внедрение Real-time web 

@@ -2,8 +2,11 @@ import type { Drug } from "./DrugTypes";
 
 const isTauri = typeof window !== 'undefined' && '__TAURI__' in window;
 
+// Для development используем прокси (пустая строка)
+// Для production (GH Pages) используем прямой адрес бэкенда
 const API_BASE_URL = isTauri 
-  ?'http://192.168.1.240:8000':'';
+  ? 'http://192.168.1.240:8005'
+  : (import.meta.env.VITE_API_BASE_URL || '');
 
 export async function listDrugs(params?: { 
   name?: string; 
