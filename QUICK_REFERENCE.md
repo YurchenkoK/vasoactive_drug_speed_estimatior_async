@@ -3,14 +3,14 @@
 ## Локальная разработка
 
 ```bash
-# Запуск бэкенда на 0.0.0.0:8000
+# Запуск бэкенда на 0.0.0.0:8005
 ./run_backend.sh
 
-# Запуск фронтенда на 0.0.0.0:3000
+# Запуск фронтенда на 0.0.0.0:3005
 ./run_frontend.sh
 
 # Или по отдельности:
-python manage.py runserver 0.0.0.0:8000
+python manage.py runserver 0.0.0.0:8005
 cd frontend && npm run dev
 ```
 
@@ -40,12 +40,12 @@ ip addr show | grep "inet " | grep -v 127.0.0.1
 ## Доступ по сети
 
 ### С локальной машины:
-- Фронт: `http://localhost:3000`
-- Бэк: `http://localhost:8000`
+- Фронт: `http://localhost:3005`
+- Бэк: `http://localhost:8005`
 
 ### С другого устройства (телефон, планшет):
-- Фронт: `http://192.168.1.XXX:3000`
-- Бэк: `http://192.168.1.XXX:8000`
+- Фронт: `http://192.168.1.XXX:3005`
+- Бэк: `http://192.168.1.XXX:8005`
 - GH Pages: `https://YurchenkoK.github.io/vasoactive_drug_speed_estimatior_frontend/`
 
 ## Структура конфигов
@@ -57,7 +57,7 @@ frontend/
 └── .env.example       ← Шаблон
 
 VITE_API_BASE_URL=     # пусто = использовать прокси
-VITE_API_BASE_URL=http://192.168.1.XXX:8000  # прямое подключение
+VITE_API_BASE_URL=http://192.168.1.XXX:8005  # прямое подключение
 ```
 
 ## Troubleshooting
@@ -65,7 +65,7 @@ VITE_API_BASE_URL=http://192.168.1.XXX:8000  # прямое подключени
 ### "Connection refused"
 ```bash
 # Убедитесь, что бэкенд запущен на 0.0.0.0
-python manage.py runserver 0.0.0.0:8000
+python manage.py runserver 0.0.0.0:8005
 ```
 
 ### "CORS errors"
@@ -81,8 +81,8 @@ CORS_ALLOW_CREDENTIALS = True
 ip addr show
 
 # 2. Проверьте firewall (если есть)
-# Linux: sudo ufw allow 3000
-#        sudo ufw allow 8000
+# Linux: sudo ufw allow 3005
+#        sudo ufw allow 8005
 
 # 3. Убедитесь, что устройства в одной WiFi сети
 ```
@@ -91,12 +91,12 @@ ip addr show
 
 ### Development (локально)
 ```
-Browser → localhost:3000 → (Vite proxy) → localhost:8000
+Browser → localhost:3005 → (Vite proxy) → localhost:8005
 ```
 
 ### Production (GH Pages)
 ```
-Browser → github.io → (прямой HTTP) → 192.168.1.XXX:8000
+Browser → github.io → (прямой HTTP) → 192.168.1.XXX:8005
          (статика)                    (локальный бэк)
 ```
 

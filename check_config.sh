@@ -19,16 +19,16 @@ echo ""
 # Проверка портов
 echo "🔌 2. Проверка доступности портов..."
 if command -v netstat > /dev/null 2>&1; then
-    if netstat -tuln 2>/dev/null | grep -q ":8000"; then
-        echo "   ✅ Порт 8000 (Django) занят"
+    if netstat -tuln 2>/dev/null | grep -q ":8005"; then
+        echo "   ✅ Порт 8005 (Django) занят"
     else
-        echo "   ⚠️  Порт 8000 свободен (запустите бэкенд)"
+        echo "   ⚠️  Порт 8005 свободен (запустите бэкенд)"
     fi
     
-    if netstat -tuln 2>/dev/null | grep -q ":3000"; then
-        echo "   ✅ Порт 3000 (Vite) занят"
+    if netstat -tuln 2>/dev/null | grep -q ":3005"; then
+        echo "   ✅ Порт 3005 (Vite) занят"
     else
-        echo "   ⚠️  Порт 3000 свободен (запустите фронтенд)"
+        echo "   ⚠️  Порт 3005 свободен (запустите фронтенд)"
     fi
 else
     echo "   ℹ️  netstat не найден, пропуск проверки портов"
@@ -74,8 +74,8 @@ echo "║  Итого                                           ║"
 echo "╚══════════════════════════════════════════════════╝"
 echo ""
 echo "Для локальной разработки:"
-echo "  Фронт: http://localhost:3000 или http://$IP:3000"
-echo "  Бэк:   http://localhost:8000 или http://$IP:8000"
+echo "  Фронт: http://localhost:3005 или http://$IP:3005"
+echo "  Бэк:   http://localhost:8005 или http://$IP:8005"
 echo ""
 echo "Для GitHub Pages:"
 echo "  1. Запустите: ./setup_ip_for_ghpages.sh"

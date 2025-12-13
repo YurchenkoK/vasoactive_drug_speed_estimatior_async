@@ -5,8 +5,8 @@ import mkcert from 'vite-plugin-mkcert'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
-  const backendHost = env.VITE_BACKEND_HOST || '0.0.0.0';
-  const backendPort = env.VITE_BACKEND_PORT || '8000';
+  const backendHost = env.VITE_BACKEND_HOST || '127.0.0.1';
+  const backendPort = env.VITE_BACKEND_PORT || '8005';
 
   return {
     base: "/vasoactive_drug_speed_estimatior_frontend/",

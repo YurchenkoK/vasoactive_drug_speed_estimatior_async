@@ -31,8 +31,8 @@
 
 ```bash
 ./check_config.sh           # Проверить конфигурацию
-./run_backend.sh            # Запуск Django на 0.0.0.0:8000
-./run_frontend.sh           # Запуск React на 0.0.0.0:3000
+./run_backend.sh            # Запуск Django на 0.0.0.0:8005
+./run_frontend.sh           # Запуск React на 0.0.0.0:3005
 ./setup_ip_for_ghpages.sh   # Настроить IP для GitHub Pages
 ./deploy_to_ghpages.sh      # Полный деплой на GH Pages
 ```
@@ -40,12 +40,12 @@
 ### 📱 Доступ
 
 **Локально:**
-- Frontend: `http://localhost:3000`
-- Backend: `http://localhost:8000`
+- Frontend: `http://localhost:3005`
+- Backend: `http://localhost:8005`
 
 **По IP (из локальной сети):**
-- Frontend: `http://192.168.1.X:3000`
-- Backend: `http://192.168.1.X:8000`
+- Frontend: `http://192.168.1.X:3005`
+- Backend: `http://192.168.1.X:8005`
 
 **GitHub Pages:**
 - `https://YurchenkoK.github.io/vasoactive_drug_speed_estimatior_frontend/`

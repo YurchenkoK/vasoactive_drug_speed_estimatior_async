@@ -35,4 +35,10 @@ echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 echo "Запуск сервера..."
-python manage.py runserver 0.0.0.0:8005
+if [ -x ".venv/bin/python" ]; then
+    echo "Использую виртуальное окружение: .venv/bin/python"
+    .venv/bin/python manage.py runserver 0.0.0.0:8005
+else
+    echo "Виртуальное окружение .venv не найдено или python не исполняемый — использую системный python"
+    python manage.py runserver 0.0.0.0:8005
+fi

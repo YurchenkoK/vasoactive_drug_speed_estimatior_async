@@ -3,8 +3,8 @@
 ## 📝 Созданные файлы
 
 ### Скрипты автоматизации (executable)
-1. `run_backend.sh` - Запуск Django на 0.0.0.0:8000 с показом IP
-2. `run_frontend.sh` - Запуск React на 0.0.0.0:3000 с показом IP
+1. `run_backend.sh` - Запуск Django на 0.0.0.0:8005 с показом IP
+2. `run_frontend.sh` - Запуск React на 0.0.0.0:3005 с показом IP
 3. `setup_ip_for_ghpages.sh` - Автоматическая настройка IP в .env.production
 4. `deploy_to_ghpages.sh` - Полный цикл деплоя на GitHub Pages
 5. `check_config.sh` - Проверка конфигурации и статуса системы
@@ -40,7 +40,7 @@ export default defineConfig({
     host: true,
     proxy: {
       "/api": {
-        target: "http://127.0.0.1:8000",
+        target: "http://127.0.0.1:8005",
       },
     },
   },
@@ -51,7 +51,7 @@ export default defineConfig({
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const backendHost = env.VITE_BACKEND_HOST || '0.0.0.0';
-  const backendPort = env.VITE_BACKEND_PORT || '8000';
+  const backendPort = env.VITE_BACKEND_PORT || '8005';
 
   return {
     server: { 
@@ -76,13 +76,13 @@ export default defineConfig(({ mode }) => {
 ```typescript
 // Было:
 const API_BASE_URL = isTauri 
-  ?'http://192.168.1.240:8000':'';
+  ?'http://192.168.1.240:8005':'';
 
 // Стало:
 // Для development используем прокси (пустая строка)
 // Для production (GH Pages) используем прямой адрес бэкенда
 const API_BASE_URL = isTauri 
-  ? 'http://192.168.1.240:8000'
+  ? 'http://192.168.1.240:8005'
   : (import.meta.env.VITE_API_BASE_URL || '');
 ```
 
@@ -128,13 +128,13 @@ const API_BASE_URL = isTauri
 
 ### Решение
 1. **Серверы на 0.0.0.0:**
-   - Django: `python manage.py runserver 0.0.0.0:8000`
+   - Django: `python manage.py runserver 0.0.0.0:8005`
    - Vite: `host: '0.0.0.0'` в конфиге
    - Результат: доступ по IP из локальной сети
 
 2. **Переменные окружения:**
    - `.env.development`: API_BASE_URL = '' (прокси)
-   - `.env.production`: API_BASE_URL = 'http://IP:8000' (прямой URL)
+   - `.env.production`: API_BASE_URL = 'http://IP:8005' (прямой URL)
    - Результат: разная логика для dev и prod
 
 3. **Автоматизация:**
@@ -196,7 +196,7 @@ const API_BASE_URL = isTauri
 # 2. Тест локального доступа
 ./run_backend.sh &
 ./run_frontend.sh
-# Открыть http://IP:3000 с другого устройства
+# Открыть http://IP:3005 с другого устройства
 
 # 3. Тест GitHub Pages
 ./deploy_to_ghpages.sh

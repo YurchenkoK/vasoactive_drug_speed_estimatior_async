@@ -13,12 +13,12 @@
 ```bash
 ./run_backend.sh
 # или
-python manage.py runserver 0.0.0.0:8000
+python manage.py runserver 0.0.0.0:8005
 ```
 
 Сервер будет доступен:
-- `http://localhost:8000` - с локальной машины
-- `http://192.168.1.XXX:8000` - из локальной сети (WiFi)
+- `http://localhost:8005` - с локальной машины
+- `http://192.168.1.XXX:8005` - из локальной сети (WiFi)
 
 #### Запуск фронтенда (React)
 ```bash
@@ -28,8 +28,8 @@ cd frontend && npm run dev
 ```
 
 Фронтенд будет доступен:
-- `http://localhost:3000` - с локальной машины
-- `http://192.168.1.XXX:3000` - из локальной сети (WiFi)
+- `http://localhost:3005` - с локальной машины
+- `http://192.168.1.XXX:3005` - из локальной сети (WiFi)
 
 **В режиме разработки:**
 - Все запросы `/api/*` проксируются на бэкенд через Vite
@@ -50,7 +50,7 @@ hostname -I
 
 2. **Обновите `.env.production`:**
 ```env
-VITE_API_BASE_URL=http://192.168.1.XXX:8000
+VITE_API_BASE_URL=http://192.168.1.XXX:8005
 ```
 Замените `192.168.1.XXX` на реальный IP вашей машины!
 
@@ -69,7 +69,7 @@ npm run deploy
 #### Как это работает:
 
 ```
-[GitHub Pages] ─────────────> [Ваш IP:8000]
+[GitHub Pages] ─────────────> [Ваш IP:8005]
    (браузер)      HTTP          (Django)
                 запросы
                 
@@ -78,7 +78,7 @@ https://YurchenkoK.github.io/vasoactive_drug_speed_estimatior_frontend/
         ↓
 делает запросы к
         ↓
-http://192.168.1.240:8000/api/drugs/
+http://192.168.1.240:8005/api/drugs/
 ```
 
 **Важно:**
@@ -91,7 +91,7 @@ http://192.168.1.240:8000/api/drugs/
 #### Frontend (drugsApi.ts)
 ```typescript
 // Development: API_BASE_URL = '' (прокси через Vite)
-// Production: API_BASE_URL = 'http://192.168.1.XXX:8000'
+// Production: API_BASE_URL = 'http://192.168.1.XXX:8005'
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 ```
 
@@ -101,7 +101,7 @@ server: {
   host: '0.0.0.0',  // Слушаем на всех интерфейсах
   proxy: {
     '/api': {
-      target: 'http://0.0.0.0:8000',  // Проксируем на бэкенд
+      target: 'http://0.0.0.0:8005',  // Проксируем на бэкенд
     }
   }
 }
@@ -120,13 +120,13 @@ CORS_ALLOW_CREDENTIALS = True
 2. Запустите бэкенд: `./run_backend.sh`
 3. Узнайте IP (будет показан при запуске скрипта)
 4. На телефоне откройте браузер:
-   - Локальный фронт: `http://192.168.1.XXX:3000`
+   - Локальный фронт: `http://192.168.1.XXX:3005`
    - GH Pages: `https://YurchenkoK.github.io/vasoactive_drug_speed_estimatior_frontend/`
 
 ### 5. Troubleshooting
 
 #### "Не могу подключиться по IP"
-- Убедитесь, что firewall не блокирует порты 3000 и 8000
+- Убедитесь, что firewall не блокирует порты 3005 и 8005
 - Проверьте, что устройства в одной сети
 - Попробуйте пинговать: `ping 192.168.1.XXX`
 
@@ -136,7 +136,7 @@ CORS_ALLOW_CREDENTIALS = True
   CORS_ALLOW_ALL_ORIGINS = True
   CORS_ALLOW_CREDENTIALS = True
   ```
-- Проверьте, что бэкенд запущен на `0.0.0.0:8000`
+- Проверьте, что бэкенд запущен на `0.0.0.0:8005`
 
 #### "Connection refused"
 - Бэкенд должен быть запущен на `0.0.0.0`, а не `127.0.0.1`
@@ -165,11 +165,11 @@ run_frontend.sh           # Запуск React с IP
 │   Development (локальная разработка)    │
 ├─────────────────────────────────────────┤
 │                                         │
-│  Browser ──> http://192.168.1.XXX:3000 │
+│  Browser ──> http://192.168.1.XXX:3005 │
 │                    │                    │
 │                    │ /api/* (proxy)     │
 │                    ↓                    │
-│             http://0.0.0.0:8000        │
+│             http://0.0.0.0:8005        │
 │              (Django backend)           │
 └─────────────────────────────────────────┘
 
@@ -180,11 +180,11 @@ run_frontend.sh           # Запуск React с IP
 │  Browser ──> https://github.io/...     │
 │       │              (static files)     │
 │       │                                 │
-│       │ fetch('http://192.168.1.XXX:8000/api/...')
+│       │ fetch('http://192.168.1.XXX:8005/api/...')
 │       │                                 │
 │       └──────────────────────┐         │
 │                              ↓         │
-│                   http://192.168.1.XXX:8000
+│                   http://192.168.1.XXX:8005
 │                      (Django backend)   │
 └─────────────────────────────────────────┘
 ```
