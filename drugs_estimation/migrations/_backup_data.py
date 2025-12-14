@@ -46,7 +46,7 @@ ORDERS_DATA = [
     {'id': 38, 'status': 'COMPLETED', 'creation_datetime': '2025-11-04 20:45:02.459719+00', 'completion_datetime': '2025-11-04 20:48:32.266726+00', 'ampoules_count': None, 'solvent_volume': None, 'patient_weight': None, 'creator': 'admin', 'moderator': None, 'formation_datetime': None},
     {'id': 39, 'status': 'COMPLETED', 'creation_datetime': '2025-11-04 20:48:44.005999+00', 'completion_datetime': '2025-11-04 20:49:01.463156+00', 'ampoules_count': 2, 'solvent_volume': '2.00', 'patient_weight': '2.00', 'creator': 'admin', 'moderator': None, 'formation_datetime': '2025-11-04 20:48:58.678049+00'},
     {'id': 62, 'status': 'COMPLETED', 'creation_datetime': '2025-11-27 22:50:27.033727+00', 'completion_datetime': '2025-11-27 22:52:00.223603+00', 'ampoules_count': 7, 'solvent_volume': '50.00', 'patient_weight': '100.00', 'creator': 'admin', 'moderator': None, 'formation_datetime': '2025-11-27 22:50:46.773851+00'},
-    {'id': 40, 'status': 'COMPLETED', 'creation_datetime': '2025-11-04 20:49:04.561973+00', 'completion_datetime': '2025-11-04 20:49:20.330281+00', 'ampoules_count': 2, 'solvent_volume': '2.00', 'patient_weight': '2.00', 'creator': 'admin', 'moderator': None, 'formation_datetime': '2025-11-04 20:4910.849023+00'},
+    {'id': 40, 'status': 'COMPLETED', 'creation_datetime': '2025-11-04 20:49:04.561973+00', 'completion_datetime': '2025-11-04 20:49:20.330281+00', 'ampoules_count': 2, 'solvent_volume': '2.00', 'patient_weight': '2.00', 'creator': 'admin', 'moderator': None, 'formation_datetime': '2025-11-04 20:49:10.849023+00'},
     {'id': 41, 'status': 'COMPLETED', 'creation_datetime': '2025-11-04 20:49:22.650863+00', 'completion_datetime': '2025-11-04 20:50:06.958533+00', 'ampoules_count': 2, 'solvent_volume': '2.00', 'patient_weight': '2.00', 'creator': 'admin', 'moderator': None, 'formation_datetime': '2025-11-04 20:49:34.367943+00'},
     {'id': 42, 'status': 'COMPLETED', 'creation_datetime': '2025-11-04 20:50:09.095337+00', 'completion_datetime': '2025-11-04 20:52:25.715872+00', 'ampoules_count': 2, 'solvent_volume': '2.00', 'patient_weight': '2.00', 'creator': 'admin', 'moderator': None, 'formation_datetime': '2025-11-04 20:52:16.386485+00'},
     {'id': 43, 'status': 'COMPLETED', 'creation_datetime': '2025-11-04 20:52:28.090031+00', 'completion_datetime': '2025-11-04 20:54:35.42747+00', 'ampoules_count': 1, 'solvent_volume': '200.00', 'patient_weight': '50.00', 'creator': 'admin', 'moderator': None, 'formation_datetime': '2025-11-04 20:54:30.720655+00'},
@@ -171,9 +171,9 @@ DRUGS_DATA = [
 
 def restore_from_backup(apps, schema_editor):
     """Восстановление ВС ЕХ данных из 28.11.backup1.sql"""
-    Drug = apps.get_model('stocks', 'Drug')
-    Order = apps.get_model('stocks', 'Order')
-    DrugInOrder = apps.get_model('stocks', 'DrugInOrder')
+    Drug = apps.get_model('drugs_estimation', 'Drug')
+    Order = apps.get_model('drugs_estimation', 'Order')
+    DrugInOrder = apps.get_model('drugs_estimation', 'DrugInOrder')
     
     # Препараты
     Drug.objects.bulk_create([Drug(**d) for d in DRUGS_DATA])

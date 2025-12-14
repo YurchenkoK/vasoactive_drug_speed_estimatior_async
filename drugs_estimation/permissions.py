@@ -1,5 +1,5 @@
 from rest_framework import permissions
-from stocks.redis_client import redis_user_client
+from drugs_estimation.redis_client import redis_user_client
 
 
 def get_redis_user(request):

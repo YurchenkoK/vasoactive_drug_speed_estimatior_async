@@ -20,7 +20,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     'corsheaders',
     
-    'stocks',
+    'drugs_estimation',
 ]
 
 MIDDLEWARE = [
@@ -30,7 +30,7 @@ MIDDLEWARE = [
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'stocks.middleware.RedisUserMiddleware',
+    'drugs_estimation.middleware.RedisUserMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -88,7 +88,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [
-    BASE_DIR / 'stocks' / 'static',
+    BASE_DIR / 'drugs_estimation' / 'static',
 ]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -101,8 +101,8 @@ MINIO_USE_SSL = False
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'stocks.authentication.RedisTokenAuthentication',  # For API clients (Authorization: Token xxx)
-        'stocks.authentication.RedisCookieAuthentication',  # For browser clients (Cookie)
+        'drugs_estimation.authentication.RedisTokenAuthentication',  # For API clients (Authorization: Token xxx)
+        'drugs_estimation.authentication.RedisCookieAuthentication',  # For browser clients (Cookie)
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',

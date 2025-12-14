@@ -1,7 +1,7 @@
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from stocks import views
+from drugs_estimation import views
 from rest_framework import routers, permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
@@ -57,4 +57,4 @@ urlpatterns = [
 ]
 
 if settings.DEBUG:
-    urlpatterns += static(settings.STATIC_URL, document_root=settings.BASE_DIR / 'stocks' / 'static')
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.BASE_DIR / 'drugs_estimation' / 'static')

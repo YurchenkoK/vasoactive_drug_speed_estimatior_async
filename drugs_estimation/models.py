@@ -10,7 +10,7 @@ class Drug(models.Model):
     is_active = models.BooleanField(default=True, verbose_name="Активен")
     
     class Meta:
-        db_table = 'ssr_inDb_drug'
+        db_table = 'drugs'
         verbose_name = "Препарат"
         verbose_name_plural = "Препараты"
         ordering = ['id']
@@ -64,7 +64,7 @@ class Order(models.Model):
     drugs = models.ManyToManyField(Drug, through='DrugInOrder', verbose_name="Препараты")
     
     class Meta:
-        db_table = 'ssr_inDb_order'
+        db_table = 'estimation_request'
         verbose_name = "Заявка"
         verbose_name_plural = "Заявки"
         ordering = ['-creation_datetime']
@@ -100,15 +100,9 @@ class DrugInOrder(models.Model):
         blank=True, 
         verbose_name="Скорость введения (мг/кг/час)"
     )
-    async_calculation_result = models.CharField(
-        max_length=100,
-        null=True,
-        blank=True,
-        verbose_name="Результат асинхронного расчета"
-    )
     
     class Meta:
-        db_table = 'ssr_inDb_druginorder'
+        db_table = 'drug_in_estimation'
         verbose_name = "Препарат в заявке"
         verbose_name_plural = "Препараты в заявках"
         unique_together = ('order', 'drug')

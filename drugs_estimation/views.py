@@ -10,15 +10,15 @@ from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
-from stocks.serializers import (
+from drugs_estimation.serializers import (
     UserSerializer, DrugSerializer, OrderSerializer, DrugInOrderSerializer
 )
-from stocks.models import Drug, Order, DrugInOrder
-from stocks.redis_client import redis_user_client
+from drugs_estimation.models import Drug, Order, DrugInOrder
+from drugs_estimation.redis_client import redis_user_client
 from minio import Minio
 from django.conf import settings
 from django.core.files.uploadedfile import InMemoryUploadedFile
-from stocks.permissions import IsManager, IsAdmin, IsAuthenticated, get_redis_user
+from drugs_estimation.permissions import IsManager, IsAdmin, IsAuthenticated, get_redis_user
 
 
 def process_file_upload(file_object: InMemoryUploadedFile, client, image_name):
@@ -336,7 +336,7 @@ class OrderList(APIView):
             orders = orders.filter(status=order_status)
         
         orders = orders.order_by('status', '-creation_datetime')
-        from stocks.serializers import OrderListSerializer
+        from drugs_estimation.serializers import OrderListSerializer
         serializer = OrderListSerializer(orders, many=True)
         return Response(serializer.data)
 
@@ -906,7 +906,7 @@ def delete_order_html(request, order_id):
         return redirect('estimation_infusion_speed')
     
     with connection.cursor() as cursor:
-        cursor.execute('UPDATE "ssr_inDb_order" SET status = %s WHERE id = %s', [Order.OrderStatus.DELETED, order_id])
+        cursor.execute('UPDATE "estimation_request" SET status = %s WHERE id = %s', [Order.OrderStatus.DELETED, order_id])
     
     return redirect('search')
 
@@ -991,7 +991,6 @@ def update_async_results(request):
                     order=order
                 )
                 drug_in_order.infusion_speed = infusion_speed
-                drug_in_order.async_calculation_result = str(infusion_speed)
                 drug_in_order.save()
                 updated_count += 1
             except DrugInOrder.DoesNotExist:

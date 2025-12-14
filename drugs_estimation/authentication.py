@@ -1,5 +1,5 @@
 from rest_framework import authentication, exceptions
-from stocks.redis_client import redis_user_client
+from drugs_estimation.redis_client import redis_user_client
 import secrets
 
 

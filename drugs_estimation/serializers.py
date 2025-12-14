@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from stocks.models import Drug, Order, DrugInOrder
+from drugs_estimation.models import Drug, Order, DrugInOrder
 from collections import OrderedDict
 
 
@@ -31,7 +31,6 @@ class DrugInOrderSerializer(serializers.ModelSerializer):
             'drug',
             'ampoule_volume',
             'infusion_speed',
-            'async_calculation_result',
         ]
         read_only_fields = ['id']
     
@@ -83,8 +82,8 @@ class OrderListSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'creator', 'moderator', 'status', 'creation_datetime', 'formation_datetime', 'completion_datetime']
     
     def get_async_results_count(self, obj):
-        """Возвращает количество DrugInOrder с заполненным async_calculation_result"""
-        return obj.items.filter(async_calculation_result__isnull=False).exclude(async_calculation_result='').count()
+        """Возвращает количество DrugInOrder с заполненной скоростью введения (infusion_speed)"""
+        return obj.items.filter(infusion_speed__isnull=False).exclude(infusion_speed='').count()
     
     def get_items(self, obj):
         """Возвращает массив ID препаратов в заявке"""
