@@ -1,5 +1,5 @@
-import { Link } from "react-router-dom";
 import Carousel from "../components/Carousel";
+import Breadcrumbs from "../components/Breadcrumbs";
 import "./HomePage.css";
 
 const BASE_URL = import.meta.env.BASE_URL;
@@ -13,20 +13,28 @@ const drugImages = [
 
 export default function HomePage() {
   return (
-    <div className="home-wrapper">
-      <div className="home-container">
-        <h1 className="home-title">Вазоактивные препараты Pfizer</h1>
-        <p className="home-description">
-          Сервис для расчёта скорости инфузии вазоактивных препаратов
-        </p>
-        
-        <div className="home-carousel-section">
-          <Carousel images={drugImages} autoPlayInterval={12000} />
-        </div>
+    <div>
+      <div className="breadcrumbs-wrapper">
+        <Breadcrumbs
+          items={[
+            { label: "Главная" },
+            { label: "Каталог препаратов", path: "/drugs" },
+          ]}
+        />
+      </div>
 
-        <Link to="/drugs" className="home-button">
-          Перейти к каталогу
-        </Link>
+      <div className="home-wrapper">
+        <div className="home-container">
+
+          <h1 className="home-title">Вазоактивные препараты Pfizer</h1>
+          <p className="home-description">
+            Сервис для расчёта скорости инфузии вазоактивных препаратов
+          </p>
+
+          <div className="home-carousel-section">
+            <Carousel images={drugImages} autoPlayInterval={12000} />
+          </div>
+        </div>
       </div>
     </div>
   );
