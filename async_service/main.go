@@ -27,8 +27,7 @@ type DrugData struct {
 }
 
 type DrugsProcessRequest struct {
-	EstimationRequestID int        `json:"estimation_request_id" binding:"required"`
-	Drugs               []DrugData `json:"drugs" binding:"required"`
+	Drugs []DrugData `json:"drugs" binding:"required"`
 }
 
 type DrugResult struct {
@@ -51,12 +50,12 @@ func calculateInfusionSpeed(drug DrugData) float64 {
 	return float64(int(infusionSpeed*100)) / 100
 }
 
-func sendResultsToDjango(orderID int, results []DrugResult) error {
-	url := fmt.Sprintf("%s/api/estimation_requests/async/update_results/", DJANGO_SERVICE_URL)
+func sendResultsToDjango(estimationRequestID int, results []DrugResult) error {
+	url := fmt.Sprintf("%s/api/estimation_requests/%d/update_results/", DJANGO_SERVICE_URL, estimationRequestID)
 
 	data := ResultsData{
 		SecretKey:           SECRET_KEY,
-		EstimationRequestID: orderID,
+		EstimationRequestID: estimationRequestID,
 		Results:             results,
 	}
 
@@ -86,7 +85,7 @@ func sendResultsToDjango(orderID int, results []DrugResult) error {
 		return fmt.Errorf("Django вернул статус %d", resp.StatusCode)
 	}
 
-	fmt.Printf("Результаты отправлены для заявки ID: %d (%d препаратов)\n", orderID, len(results))
+	fmt.Printf("Результаты отправлены для заявки ID: %d (%d препаратов)\n", estimationRequestID, len(results))
 	return nil
 }
 
@@ -114,7 +113,9 @@ func performAsyncCalculation(estimationRequestID int, drugs []DrugData) {
 	}
 }
 
-func drugsProcessHandler(c *gin.Context) {
+func estimationRequestCalculateHandler(c *gin.Context) {
+	estimationRequestID := c.Param("id")
+
 	var req DrugsProcessRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -125,12 +126,21 @@ func drugsProcessHandler(c *gin.Context) {
 		return
 	}
 
-	go performAsyncCalculation(req.EstimationRequestID, req.Drugs)
+	// Конвертируем ID из строки в int
+	var id int
+	if _, err := fmt.Sscanf(estimationRequestID, "%d", &id); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Неверный ID заявки",
+		})
+		return
+	}
+
+	go performAsyncCalculation(id, req.Drugs)
 
 	c.JSON(http.StatusAccepted, gin.H{
 		"status":                "accepted",
 		"message":               "Задача помещена в очередь на обработку",
-		"estimation_request_id": req.EstimationRequestID,
+		"estimation_request_id": id,
 		"drugs_count":           len(req.Drugs),
 	})
 }
@@ -148,7 +158,7 @@ func main() {
 
 	r := gin.Default()
 
-	r.POST("/drugs_process/", drugsProcessHandler)
+	r.POST("/estimation_request_calculate/:id", estimationRequestCalculateHandler)
 	r.GET("/health", healthHandler)
 
 	if err := r.Run(PORT); err != nil {

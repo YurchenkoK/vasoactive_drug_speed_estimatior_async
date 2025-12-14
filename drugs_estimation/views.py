@@ -495,7 +495,7 @@ def complete_estimation_request(request, pk):
         estimation_request.status = EstimationRequest.EstimationRequestStatus.COMPLETED
         estimation_request.save()
         
-        # После утверждения Django-сервис направляет POST запрос /drugs_process/ в асинхронный Go-сервис
+        # После утверждения Django-сервис направляет POST запрос /estimation_request_calculate/:id в асинхронный Go-сервис
         drugs_in_estimation = DrugInEstimation.objects.filter(estimation_request=estimation_request)
         drugs_data = []
         for drug_in_estimation in drugs_in_estimation:
@@ -510,9 +510,8 @@ def complete_estimation_request(request, pk):
         
         try:
             response = requests.post(
-                f"{settings.ASYNC_SERVICE_URL}/drugs_process/",
+                f"{settings.ASYNC_SERVICE_URL}/estimation_request_calculate/{estimation_request.id}",
                 json={
-                    "estimation_request_id": estimation_request.id,
                     "drugs": drugs_data
                 },
                 timeout=5
@@ -953,12 +952,11 @@ def complete_estimation_request_html(request, estimation_request_id):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 @authentication_classes([])
-def update_async_results(request):
+def update_async_results(request, pk):
     """Принять результат от асинхронного сервиса"""
     from django.conf import settings
     
     secret_key = request.data.get('secret_key')
-    estimation_request_id = request.data.get('estimation_request_id')
     results = request.data.get('results', [])
     
     # Проверка секретного ключа
@@ -970,10 +968,10 @@ def update_async_results(request):
     
     # Проверка наличия заявки
     try:
-        estimation_request = EstimationRequest.objects.get(pk=estimation_request_id)
+        estimation_request = EstimationRequest.objects.get(pk=pk)
     except EstimationRequest.DoesNotExist:
         return Response(
-            {"error": f"Заявка с ID {estimation_request_id} не найдена"},
+            {"error": f"Заявка с ID {pk} не найдена"},
             status=status.HTTP_404_NOT_FOUND
         )
     
@@ -999,7 +997,7 @@ def update_async_results(request):
     return Response({
         "status": "success",
         "message": "Результаты успешно обновлены",
-        "estimation_request_id": estimation_request_id,
+        "estimation_request_id": pk,
         "updated_count": updated_count
     })
 

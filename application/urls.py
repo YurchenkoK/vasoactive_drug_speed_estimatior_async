@@ -44,7 +44,7 @@ urlpatterns = [
     path('api/estimation_requests/<int:pk>/complete/', views.complete_estimation_request, name='estimation-request-complete'),
     
     path('api/estimation_requests/<int:estimation_request_pk>/drugs/<int:drug_pk>/', views.drug_in_estimation_actions, name='drug-in-estimation'),
-    path('api/estimation_requests/async/update_results/', views.update_async_results, name='update-async-results'),
+    path('api/estimation_requests/<int:pk>/update_results/', views.update_async_results, name='update-async-results'),
     
    path('api/laboratory_users/register/', views.UserRegistration.as_view(), name='laboratory-user-register'),
    path('api/laboratory_users/profile/<int:pk>/', views.UserProfile.as_view(), name='laboratory-user-profile'),
