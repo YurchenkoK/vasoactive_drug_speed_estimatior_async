@@ -18,28 +18,28 @@ const (
 )
 
 type DrugData struct {
-	DrugInOrderID     int     `json:"druginorder_id" binding:"required"`
-	DrugConcentration float64 `json:"drug_concentration" binding:"required"`
-	AmpouleVolume     float64 `json:"ampoule_volume" binding:"required"`
-	AmpoulesCount     int     `json:"ampoules_count" binding:"required"`
-	SolventVolume     float64 `json:"solvent_volume" binding:"required"`
-	PatientWeight     float64 `json:"patient_weight" binding:"required"`
+	DrugInEstimationID int     `json:"druginestimation_id" binding:"required"`
+	DrugConcentration  float64 `json:"drug_concentration" binding:"required"`
+	AmpouleVolume      float64 `json:"ampoule_volume" binding:"required"`
+	AmpoulesCount      int     `json:"ampoules_count" binding:"required"`
+	SolventVolume      float64 `json:"solvent_volume" binding:"required"`
+	PatientWeight      float64 `json:"patient_weight" binding:"required"`
 }
 
 type DrugsProcessRequest struct {
-	OrderID int        `json:"order_id" binding:"required"`
-	Drugs   []DrugData `json:"drugs" binding:"required"`
+	EstimationRequestID int        `json:"estimation_request_id" binding:"required"`
+	Drugs               []DrugData `json:"drugs" binding:"required"`
 }
 
 type DrugResult struct {
-	DrugInOrderID int     `json:"druginorder_id"`
-	InfusionSpeed float64 `json:"infusion_speed"`
+	DrugInEstimationID int     `json:"druginestimation_id"`
+	InfusionSpeed      float64 `json:"infusion_speed"`
 }
 
 type ResultsData struct {
-	SecretKey string       `json:"secret_key"`
-	OrderID   int          `json:"order_id"`
-	Results   []DrugResult `json:"results"`
+	SecretKey           string       `json:"secret_key"`
+	EstimationRequestID int          `json:"estimation_request_id"`
+	Results             []DrugResult `json:"results"`
 }
 
 func calculateInfusionSpeed(drug DrugData) float64 {
@@ -52,12 +52,12 @@ func calculateInfusionSpeed(drug DrugData) float64 {
 }
 
 func sendResultsToDjango(orderID int, results []DrugResult) error {
-	url := fmt.Sprintf("%s/api/orders/async/update_results/", DJANGO_SERVICE_URL)
+	url := fmt.Sprintf("%s/api/estimation_requests/async/update_results/", DJANGO_SERVICE_URL)
 
 	data := ResultsData{
-		SecretKey: SECRET_KEY,
-		OrderID:   orderID,
-		Results:   results,
+		SecretKey:           SECRET_KEY,
+		EstimationRequestID: orderID,
+		Results:             results,
 	}
 
 	jsonData, err := json.Marshal(data)
@@ -90,8 +90,8 @@ func sendResultsToDjango(orderID int, results []DrugResult) error {
 	return nil
 }
 
-func performAsyncCalculation(orderID int, drugs []DrugData) {
-	fmt.Printf("Начат расчет для заявки ID: %d (%d препаратов)\n", orderID, len(drugs))
+func performAsyncCalculation(estimationRequestID int, drugs []DrugData) {
+	fmt.Printf("Начат расчет для заявки ID: %d (%d препаратов)\n", estimationRequestID, len(drugs))
 
 	delay := time.Duration(5+rand.Intn(6)) * time.Second
 	fmt.Printf("Задержка: %v\n", delay)
@@ -101,13 +101,13 @@ func performAsyncCalculation(orderID int, drugs []DrugData) {
 	for _, drug := range drugs {
 		infusionSpeed := calculateInfusionSpeed(drug)
 		results = append(results, DrugResult{
-			DrugInOrderID: drug.DrugInOrderID,
-			InfusionSpeed: infusionSpeed,
+			DrugInEstimationID: drug.DrugInEstimationID,
+			InfusionSpeed:      infusionSpeed,
 		})
-		fmt.Printf("Препарат %d: скорость введения = %.2f мг/кг/час\n", drug.DrugInOrderID, infusionSpeed)
+		fmt.Printf("Препарат %d: скорость введения = %.2f мг/кг/час\n", drug.DrugInEstimationID, infusionSpeed)
 	}
 
-	err := sendResultsToDjango(orderID, results)
+	err := sendResultsToDjango(estimationRequestID, results)
 	if err != nil {
 		fmt.Printf("Ошибка отправки результатов: %v\n", err)
 		return
@@ -125,13 +125,13 @@ func drugsProcessHandler(c *gin.Context) {
 		return
 	}
 
-	go performAsyncCalculation(req.OrderID, req.Drugs)
+	go performAsyncCalculation(req.EstimationRequestID, req.Drugs)
 
 	c.JSON(http.StatusAccepted, gin.H{
-		"status":      "accepted",
-		"message":     "Задача помещена в очередь на обработку",
-		"order_id":    req.OrderID,
-		"drugs_count": len(req.Drugs),
+		"status":                "accepted",
+		"message":               "Задача помещена в очередь на обработку",
+		"estimation_request_id": req.EstimationRequestID,
+		"drugs_count":           len(req.Drugs),
 	})
 }
 

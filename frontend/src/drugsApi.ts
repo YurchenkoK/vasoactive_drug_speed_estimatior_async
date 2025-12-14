@@ -51,7 +51,7 @@ export interface CartInfo {
 
 export async function getCartInfo(): Promise<CartInfo> {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/orders/cart/`, { 
+    const res = await fetch(`${API_BASE_URL}/api/estimation_requests/cart/`, { 
       headers: { Accept: "application/json" },
       credentials: 'include'
     });

@@ -22,13 +22,13 @@
         }
 
         function updateAmpouleVolume(input) {
-            const orderId = input.getAttribute('data-order-id');
+            const estimationRequestId = input.getAttribute('data-estimation-request-id');
             const drugId = input.getAttribute('data-drug-id');
             const newVolume = input.value;
             
             const card = input.closest('.result-card');
             
-            fetch(`/api/orders/${orderId}/drugs/${drugId}/`, {
+            fetch(`/api/estimation_requests/${estimationRequestId}/drugs/${drugId}/`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -66,8 +66,8 @@
     <div class="cart-container">
         <h2 class="cart-title">Расчет скорости инфузии</h2>
         
-        {% if data.order_status == 'DRAFT' %}
-        <form method="POST" action="{% url 'update_order_params' data.order_id %}">
+    {% if data.order_status == 'DRAFT' %}
+    <form method="POST" action="{% url 'update_estimation_request_params' data.order_id %}">
             {% csrf_token %}
             <div class="infusion-calculator">
                 <div class="calculator-form">
@@ -108,11 +108,11 @@
         
         {% if data.order_id %}
             {% if data.estimation_params.ampoules and data.estimation_params.solvent_volume and data.estimation_params.patient_weight %}
-            <form id="complete-form-{{ data.order_id }}" method="POST" action="{% url 'complete_order' data.order_id %}" class="hidden-form">
+            <form id="complete-form-{{ data.order_id }}" method="POST" action="{% url 'complete_estimation_request' data.order_id %}" class="hidden-form">
                 {% csrf_token %}
             </form>
             {% else %}
-            <form id="delete-form-{{ data.order_id }}" method="POST" action="{% url 'delete_order' data.order_id %}" class="hidden-form">
+            <form id="delete-form-{{ data.order_id }}" method="POST" action="{% url 'delete_estimation_request' data.order_id %}" class="hidden-form">
                 {% csrf_token %}
             </form>
             {% endif %}
@@ -140,7 +140,7 @@
                         Завершить заявку
                     </button>
                 </div>
-                <form id="complete-form-formed-{{ data.order_id }}" method="POST" action="{% url 'complete_order' data.order_id %}" class="hidden-form">
+                <form id="complete-form-formed-{{ data.order_id }}" method="POST" action="{% url 'complete_estimation_request' data.order_id %}" class="hidden-form">
                     {% csrf_token %}
                 </form>
                 {% endif %}
@@ -166,11 +166,11 @@
                             <span class="spec-label">Объём амп.:</span>
                             {% if data.order_status == 'DRAFT' %}
                             <div class="spec-value-edit">
-                                <input type="text" 
+                    <input type="text" 
                                        class="spec-input-inline" 
                                        value="{{ item.ampoule_volume }}" 
                                        data-drug-id="{{ item.drug_id }}"
-                                       data-order-id="{{ data.order_id }}"
+                        data-estimation-request-id="{{ data.order_id }}"
                                        onchange="updateAmpouleVolume(this)"
                                        oninput="this.value = this.value.replace(',', '.')">
                             </div>
