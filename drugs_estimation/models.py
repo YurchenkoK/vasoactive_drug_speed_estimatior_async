@@ -120,7 +120,6 @@ class DrugInOrder(models.Model):
         
         if self.order and self.order.solvent_volume and self.order.patient_weight and self.order.ampoules_count:
             volume = self.ampoule_volume if self.ampoule_volume else self.drug.volume
-            # Приводим все к Decimal для корректных вычислений
             volume = Decimal(str(volume)) if not isinstance(volume, Decimal) else volume
             total_drug_mg = self.drug.concentration * Decimal(self.order.ampoules_count) * volume
             infusion_speed_ml_hour = self.order.solvent_volume

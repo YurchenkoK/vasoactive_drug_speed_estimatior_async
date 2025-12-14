@@ -40,7 +40,6 @@ class DrugInOrderSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    # Removed nested 'items' from all Order responses per API requirement
     class Meta:
         model = Order
         fields = [

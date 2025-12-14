@@ -76,7 +76,7 @@ def delete_pic(drug):
         img_obj_name = drug.image_url.split('/')[-1]
         client.remove_object('images', img_obj_name)
     except Exception:
-        pass  # Error deleting image
+        pass
 
 
 class UserRegistration(APIView):
@@ -509,7 +509,6 @@ def complete_order(request, pk):
             })
         
         try:
-            # Отправляем запрос к Go сервису
             response = requests.post(
                 f"{settings.ASYNC_SERVICE_URL}/drugs_process/",
                 json={
@@ -519,9 +518,8 @@ def complete_order(request, pk):
                 timeout=5
             )
             if response.status_code != 202:
-                pass  # Go service returned unexpected status
-        except requests.exceptions.RequestException as e:
-            # Ошибка вызова async service, но не останавливаем процесс утверждения заявки
+                pass
+        except requests.exceptions.RequestException:
             pass
     
     elif action == 'reject':
@@ -560,8 +558,10 @@ def drug_in_order_actions(request, order_pk, drug_pk):
     
     order = get_object_or_404(Order, pk=order_pk)
     username = redis_user['username']
+    is_superuser = redis_user.get('is_superuser') in ['1', 'True', True]
     
-    if order.creator != username:
+    # Суперпользователь может редактировать любые заявки
+    if not is_superuser and order.creator != username:
         return Response({"error": "Можно изменять только свои заявки"}, 
                        status=status.HTTP_403_FORBIDDEN)
     if order.status != Order.OrderStatus.DRAFT:
@@ -585,7 +585,6 @@ def drug_in_order_actions(request, order_pk, drug_pk):
                 return Response({"error": "Неверный формат объёма ампулы"}, 
                                status=status.HTTP_400_BAD_REQUEST)
         
-        # Убираем автоматический перерасчет
         drug_in_order.save()
         
         serializer = DrugInOrderSerializer(drug_in_order)

@@ -53,14 +53,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     })();
 
-    currentFetch.then((info) => {
-      if (shouldLog) {
-        try {
-          console.log(`данные корзины:`, info);
-        } catch (e) {
-          /* noop */
-        }
-      }
+    currentFetch.then(() => {
       shouldLog = false;
       currentFetch = null;
     });

@@ -46,9 +46,6 @@
                 return response.json();
             })
             .then(data => {
-                console.log('Объём ампулы обновлен:', data);
-                
-                // Обновляем скорость инфузии без перезагрузки страницы
                 if (data.infusion_speed) {
                     const speedElement = card.querySelector('.spec-value-result');
                     if (speedElement) {
@@ -57,7 +54,6 @@
                 }
             })
             .catch(error => {
-                console.error('Ошибка:', error);
                 alert('Ошибка при обновлении объёма ампулы: ' + error.message);
             });
         }

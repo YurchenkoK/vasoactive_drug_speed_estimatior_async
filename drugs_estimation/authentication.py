@@ -1,6 +1,5 @@
 from rest_framework import authentication, exceptions
 from drugs_estimation.redis_client import redis_user_client
-import secrets
 
 
 class RedisTokenAuthentication(authentication.BaseAuthentication):

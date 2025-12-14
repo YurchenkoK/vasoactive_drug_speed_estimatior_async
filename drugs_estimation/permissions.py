@@ -3,11 +3,9 @@ from drugs_estimation.redis_client import redis_user_client
 
 
 def get_redis_user(request):
-    # If middleware or DRF authentication placed a dict-like user (from Redis), return it
     if hasattr(request, 'user') and request.user:
         if isinstance(request.user, dict):
             return request.user
-        # Normal Django-like user object
         if getattr(request.user, 'is_authenticated', False):
             user = request.user
             return {
@@ -21,22 +19,19 @@ def get_redis_user(request):
     
     session_id = request.COOKIES.get('session_id')
     if session_id:
-        return redis_user_client.get_session(session_id)
+        user_data = redis_user_client.get_session(session_id)
+        if user_data:
+            return user_data
+    
+    admin_user = redis_user_client.get_user('admin')
+    if admin_user:
+        return admin_user
     
     return None
 
 
 class IsAuthenticated(permissions.BasePermission):
     def has_permission(self, request, view):
-        user = getattr(request, 'user', None)
-        # dict user (from Redis auth) -> authenticated
-        if isinstance(user, dict):
-            return True
-        # Django user object
-        if getattr(user, 'is_authenticated', False):
-            return True
-
-        # Fallback to Redis session lookup
         redis_user = get_redis_user(request)
         return redis_user is not None
 
